@@ -378,4 +378,32 @@ def view_wardrobe_items_view(request):
 
     return JsonResponse({'items': result.data}, status=200)
 
+@csrf_exempt
+def show_profile_view(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    email = data.get('email')
+    if not email:
+        return JsonResponse({'error': 'Email is required'}, status=400)
+
+    # Fetch user info
+    user = supabase.table("login").select("first_name", "last_name", "picture").eq("email", email).execute()
+    if not user.data:
+        return JsonResponse({'error': 'User not found'}, status=404)
+
+    user_data = user.data[0]
+    full_name = f"{user_data['first_name']} {user_data['last_name']}"
+    picture = user_data.get("picture")
+
+    return JsonResponse({
+        'name': full_name,
+        'picture': picture
+    }, status=200)
+
 
