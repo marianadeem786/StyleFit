@@ -10,6 +10,7 @@ from django.utils.timezone import now
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.hashers import check_password
 from datetime import datetime
+from django.http import JsonResponse
 
 @csrf_exempt
 def signup_view(request):
@@ -69,38 +70,44 @@ def signup_view(request):
 def verify_otp_view(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'Only POST allowed'}, status=405)
+
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
     email = data.get('email')
     otp_input = data.get('otp')
+
     if not email or not otp_input:
         return JsonResponse({'error': 'Email and OTP are required'}, status=400)
-    signup_entry = supabase.table("signup").select("*").eq("email", email).execute()
 
+    signup_entry = supabase.table("signup").select("*").eq("email", email).execute()
     if not signup_entry.data:
         return JsonResponse({'error': 'No signup found for this email'}, status=404)
-
+    
     user = signup_entry.data[0]
-    saved_otp = user.get("otp")
-    if otp_input != saved_otp:
+    if otp_input != user.get("otp"):
         return JsonResponse({'error': 'Invalid OTP'}, status=401)
+    
     hashed_password = make_password(user["password"])
+
+    default_picture_url = "https://your-project-id.supabase.co/storage/v1/object/public/profilepicture/default-avatar.png"
 
     result = supabase.table("login").insert({
         "email": user["email"],
         "password": hashed_password,
         "first_name": user["first_name"],
         "last_name": user["last_name"],
-        "picture": None  
+        "picture": default_picture_url
     }).execute()
 
     if not result.data:
         return JsonResponse({'error': 'Failed to create login account'}, status=500)
     supabase.table("signup").delete().eq("email", email).execute()
-
+    
     return JsonResponse({'message': 'OTP verified. Account created successfully.'}, status=200)
+
 
 @csrf_exempt
 def login_view(request):
