@@ -100,3 +100,39 @@ def verify_otp_view(request):
     supabase.table("signup").delete().eq("email", email).execute()
 
     return JsonResponse({'message': 'OTP verified. Account created successfully.'}, status=200)
+
+from django.contrib.auth.hashers import check_password
+from django.views.decorators.csrf import csrf_exempt
+import json
+from datetime import datetime
+from django.utils.timezone import now
+
+@csrf_exempt
+def login_view(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    email = data.get('email')
+    password = data.get('password')
+    if not email or not password:
+        return JsonResponse({'error': 'Email and password are required'}, status=400)
+    user_entry = supabase.table("login").select("*").eq("email", email).execute()
+    if not user_entry.data:
+        return JsonResponse({'error': 'User not found'}, status=404)
+    user = user_entry.data[0]
+    hashed_password = user['password']
+    if not check_password(password, hashed_password):
+        return JsonResponse({'error': 'Incorrect password'}, status=401)
+    session_result = supabase.table("user_sessions").insert({
+        "email": email,
+        "created_at": now().isoformat()
+    }).execute()
+
+    if not session_result.data:
+        return JsonResponse({'error': 'Login succeeded, but session creation failed'}, status=500)
+
+    return JsonResponse({'message': 'Login successful'}, status=200)
+
