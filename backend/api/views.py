@@ -289,3 +289,93 @@ def remove_profile_picture_view(request):
         return JsonResponse({'error': 'Failed to reset profile picture'}, status=500)
 
     return JsonResponse({'message': 'Profile picture removed and reset to default'}, status=200)
+
+@csrf_exempt
+def upload_wardrobe_item_view(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+
+    email = request.POST.get('email')
+    category = request.POST.get('category', '')
+    image = request.FILES.get('image')
+
+    if not email or not image:
+        return JsonResponse({'error': 'Email and image are required'}, status=400)
+
+    ext = image.name.split('.')[-1]
+    filename = f"wardrobe/{email}/{uuid.uuid4()}.{ext}"
+
+    try:
+        supabase.storage.from_('wardrobe').upload(filename, image.read(), {
+            "content-type": image.content_type
+        })
+    except Exception as e:
+        return JsonResponse({'error': f'Upload failed: {str(e)}'}, status=500)
+
+    public_url = f"https://{os.getenv('SUPABASE_URL').split('//')[1]}/storage/v1/object/public/{filename}"
+
+    result = supabase.table("wardrobe").insert({
+        "email": email,
+        "image_url": public_url,
+        "category": category
+    }).execute()
+
+    if not result.data:
+        return JsonResponse({'error': 'Failed to save wardrobe item in DB'}, status=500)
+
+    return JsonResponse({'message': 'Item added to wardrobe', 'item': result.data[0]}, status=201)
+
+@csrf_exempt
+def remove_wardrobe_item_view(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    email = data.get('email')
+    item_id = data.get('id')
+
+    if not email or not item_id:
+        return JsonResponse({'error': 'Email and item ID are required'}, status=400)
+
+    # Fetch item to get image_url
+    entry = supabase.table("wardrobe").select("image_url").eq("email", email).eq("id", item_id).execute()
+    if not entry.data:
+        return JsonResponse({'error': 'Wardrobe item not found'}, status=404)
+
+    image_url = entry.data[0]["image_url"]
+    filename = image_url.split("/wardrobe/")[1]
+
+    # Delete image from storage
+    try:
+        supabase.storage.from_("wardrobe").remove([f"wardrobe/{filename}"])
+    except Exception as e:
+        print("Warning: storage delete failed", e)
+
+    # Delete from wardrobe table
+    supabase.table("wardrobe").delete().eq("email", email).eq("id", item_id).execute()
+
+    return JsonResponse({'message': 'Wardrobe item removed'}, status=200)
+
+@csrf_exempt
+def view_wardrobe_items_view(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    email = data.get('email')
+    if not email:
+        return JsonResponse({'error': 'Email is required'}, status=400)
+
+    result = supabase.table("wardrobe").select("*").eq("email", email).order("uploaded_at", desc=True).execute()
+
+    return JsonResponse({'items': result.data}, status=200)
+
+
