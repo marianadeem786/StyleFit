@@ -10,7 +10,9 @@ from django.utils.timezone import now
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.hashers import check_password
 from datetime import datetime
-from django.http import JsonResponse
+import uuid
+from django.core.files.uploadedfile import InMemoryUploadedFile
+from dotenv import load_dotenv
 
 @csrf_exempt
 def signup_view(request):
@@ -105,7 +107,7 @@ def verify_otp_view(request):
     if not result.data:
         return JsonResponse({'error': 'Failed to create login account'}, status=500)
     supabase.table("signup").delete().eq("email", email).execute()
-    
+
     return JsonResponse({'message': 'OTP verified. Account created successfully.'}, status=200)
 
 
@@ -215,3 +217,75 @@ def reset_password_view(request):
     supabase.table("password_change_requests").delete().eq("email", email).execute()
     return JsonResponse({'message': 'Password reset successfully'}, status=200)
 
+load_dotenv()
+SUPABASE_PROJECT = os.getenv("SUPABASE_URL").split("//")[1]
+DEFAULT_PICTURE = "https://{}/storage/v1/object/public/profile/default-avatar.png".format(SUPABASE_PROJECT)
+@csrf_exempt
+def upload_profile_picture_view(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST method allowed'}, status=405)
+    email = request.POST.get('email')
+    image = request.FILES.get('image')
+    if not email or not image:
+        return JsonResponse({'error': 'Email and image are required'}, status=400)
+    user = supabase.table("login").select("*").eq("email", email).execute()
+    if not user.data:
+        return JsonResponse({'error': 'User not found'}, status=404)
+    ext = image.name.split('.')[-1]
+    filename = f"profile/{uuid.uuid4()}.{ext}"
+
+    try:
+        supabase.storage.from_('profile').upload(filename, image.read(), {
+            "content-type": image.content_type
+        })
+    except Exception as e:
+        return JsonResponse({'error': f'Upload failed: {str(e)}'}, status=500)
+
+    public_url = f"https://{SUPABASE_PROJECT}/storage/v1/object/public/{filename}"
+
+    result = supabase.table("login").update({
+        "picture": public_url
+    }).eq("email", email).execute()
+
+    if not result.data:
+        return JsonResponse({'error': 'Failed to update login record'}, status=500)
+
+    return JsonResponse({
+        "message": "Profile picture updated successfully",
+        "url": public_url
+    }, status=200)
+
+
+@csrf_exempt
+def remove_profile_picture_view(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    email = data.get('email')
+    if not email:
+        return JsonResponse({'error': 'Email is required'}, status=400)
+    user_entry = supabase.table("login").select("picture").eq("email", email).execute()
+    if not user_entry.data:
+        return JsonResponse({'error': 'User not found'}, status=404)
+    user = user_entry.data[0]
+    picture_url = user.get('picture')
+    project_url = os.getenv("SUPABASE_URL").split("//")[1]
+    default_picture_url = f"https://{project_url}/storage/v1/object/public/profilepicture/default-avatar.png"
+    if picture_url and picture_url != default_picture_url:
+        try:
+            filename = picture_url.split("/profile/")[1]
+            supabase.storage.from_('profile').remove([f"profile/{filename}"])
+        except Exception as e:
+            print("Warning: failed to delete old image:", e)
+
+    update = supabase.table("login").update({
+        "picture": default_picture_url
+    }).eq("email", email).execute()
+
+    if not update.data:
+        return JsonResponse({'error': 'Failed to reset profile picture'}, status=500)
+
+    return JsonResponse({'message': 'Profile picture removed and reset to default'}, status=200)
