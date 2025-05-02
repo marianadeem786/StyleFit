@@ -48,14 +48,55 @@ def signup_view(request):
        return JsonResponse({'error': 'Signup failed. Could not save to Supabase.'}, status=500)
     try:
         send_mail(
-            subject='Your OTP for StyleFit Signup',
-            message=f'Hello {first_name},\n\nYour OTP is: {otp}\n\nUse this to verify your account.',
-            from_email=os.getenv("EMAIL_HOST_USER"),
-            recipient_list=[email],
-            fail_silently=False,
-        )
+        subject='Your OTP Code – StyleFit',
+        message=f'Hi {first_name},\n\nHere is your OTP: {otp}\nIt’s valid for 10 minutes.\n\nThanks,\nStyleFit Team',
+        from_email=os.getenv("EMAIL_HOST_USER"),
+        recipient_list=[email],
+        fail_silently=False,
+    )
+
     except Exception as e:
         print("Email sending failed:", e)
         return JsonResponse({'error': 'Signup saved but OTP email failed to send.'}, status=500)
 
     return JsonResponse({'message': 'Signup successful. OTP sent to your email.'}, status=201)
+
+from django.contrib.auth.hashers import make_password
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+def verify_otp_view(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    email = data.get('email')
+    otp_input = data.get('otp')
+    if not email or not otp_input:
+        return JsonResponse({'error': 'Email and OTP are required'}, status=400)
+    signup_entry = supabase.table("signup").select("*").eq("email", email).execute()
+
+    if not signup_entry.data:
+        return JsonResponse({'error': 'No signup found for this email'}, status=404)
+
+    user = signup_entry.data[0]
+    saved_otp = user.get("otp")
+    if otp_input != saved_otp:
+        return JsonResponse({'error': 'Invalid OTP'}, status=401)
+    hashed_password = make_password(user["password"])
+
+    result = supabase.table("login").insert({
+        "email": user["email"],
+        "password": hashed_password,
+        "first_name": user["first_name"],
+        "last_name": user["last_name"],
+        "picture": None  
+    }).execute()
+
+    if not result.data:
+        return JsonResponse({'error': 'Failed to create login account'}, status=500)
+    supabase.table("signup").delete().eq("email", email).execute()
+
+    return JsonResponse({'message': 'OTP verified. Account created successfully.'}, status=200)
