@@ -1,94 +1,70 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
-import { useFonts } from 'expo-font';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import * as Font from 'expo-font';
 
-export default function HomeScreen() {
-  const [fontsLoaded] = useFonts({
-    'Montserrat-Bold': require('../assets/Montserrat-Bold.ttf'),
-  });
+export default function GetStartedScreen({ navigation }) {
+  const [fontsLoaded, setFontsLoaded] = useState(false);
 
-  if (!fontsLoaded) return null;
+  useEffect(() => {
+    const loadFonts = async () => {
+      await Font.loadAsync({
+        'Montserrat-Bold': require('../assets/Montserrat-Bold.ttf'),
+      });
+      setFontsLoaded(true);
+    };
+
+    loadFonts();
+  }, []);
+
+  if (!fontsLoaded) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#50808E" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <Image source={require('../assets/logo.png')} style={styles.logo} />
-
-      <Text style={styles.welcomeText}>Hello, Fashion Explorer!</Text>
-      <Text style={styles.subText}>Let's find your next look</Text>
-
-      <View style={styles.iconRow}>
-        <TouchableOpacity style={styles.iconWrapper}>
-          <Image source={require('../assets/lookFinder.png')} style={styles.icon} />
-          <Text style={styles.iconLabel}>Look Finder</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.iconWrapper}>
-          <Image source={require('../assets/profile.png')} style={styles.icon} />
-          <Text style={styles.iconLabel}>Profile</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.iconRow}>
-        <TouchableOpacity style={styles.iconWrapper}>
-          <Image source={require('../assets/trends.png')} style={styles.icon} />
-          <Text style={styles.iconLabel}>Trends</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.iconWrapper}>
-          <Image source={require('../assets/globalStore.png')} style={styles.icon} />
-          <Text style={styles.iconLabel}>Global Store</Text>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('LandingScreen')} // <-- adjust target screen
+      >
+        <Text style={styles.buttonText}>Get Started</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F5DC',
+  },
   container: {
     flex: 1,
     backgroundColor: '#F5F5DC',
     alignItems: 'center',
-    paddingTop: 60,
+    justifyContent: 'center',
   },
   logo: {
-    width: 200,
-    height: 200,
-    resizeMode: 'contain',
-    marginBottom: 50,
-    marginTop: -80,
+    width: 400,
+    height: 400,
+    marginBottom: 40,
   },
-  welcomeText: {
-    fontSize: 24,
+  button: {
+    backgroundColor: '#50808E',
+    paddingVertical: 15,
+    paddingHorizontal: 25,
+    borderRadius: 25,
+    marginTop: -60,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 20,
     fontFamily: 'Montserrat-Bold',
-    color: '#333',
-    marginBottom: 5,
-  },
-  subText: {
-    fontSize: 16,
-    fontFamily: 'Montserrat-Bold',
-    color: '#4d6a72',
-    marginBottom: 30,
-  },
-  iconRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '80%',
-    marginBottom: 30,
-    marginTop: 30
-  },
-  iconWrapper: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  icon: {
-    width: 80,
-    height: 80,
-    resizeMode: 'contain',
-    marginBottom: 15,
-  },
-  iconLabel: {
-    fontFamily: 'Montserrat-Bold',
-    fontSize: 14,
-    color: '#333',
   },
 });

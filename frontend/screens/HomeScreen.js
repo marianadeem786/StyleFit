@@ -1,84 +1,108 @@
-// HomeScreen.js
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { useFonts } from 'expo-font';
 
-// Import the logos
-import lookFinderLogo from '../assets/lookFinder.png';
-import profileLogo from '../assets/profile.png';
-import trendsLogo from '../assets/trends.png';
-import globalStoreLogo from '../assets/globalStore.png';
-import styleFitLogo from '../assets/logo.png';
+export default function HomeScreen({navigation }) {
+  const [fontsLoaded] = useFonts({
+    'Montserrat-Bold': require('../assets/Montserrat-Bold.ttf'),
+  });
 
-const HomeScreen = () => {
+  if (!fontsLoaded) return null;
+
   return (
     <View style={styles.container}>
-      {/* StyleFit Logo */}
-      <Image source={styleFitLogo} style={styles.styleFitLogo} />
+      <Image source={require('../assets/logo.png')} style={styles.logo} />
 
-      {/* Greeting Text */}
-      <Text style={styles.greetingText}>
-        Hello, Fashion Explorer! Let's find your next look
-      </Text>
+      <Text style={styles.welcomeText}>Hello, Fashion Explorer!</Text>
+      <Text style={styles.subText}>Let's find your next look</Text>
 
-      {/* Logo buttons */}
-      <View style={styles.logoContainer}>
-        <TouchableOpacity style={styles.logoButton}>
-          <Image source={lookFinderLogo} style={styles.logo} />
-          <Text style={styles.logoText}>Look Finder</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.logoButton}>
-          <Image source={profileLogo} style={styles.logo} />
-          <Text style={styles.logoText}>Profile</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.logoButton}>
-          <Image source={trendsLogo} style={styles.logo} />
-          <Text style={styles.logoText}>Trends</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.logoButton}>
-          <Image source={globalStoreLogo} style={styles.logo} />
-          <Text style={styles.logoText}>Global Store</Text>
-        </TouchableOpacity>
+      <View style={styles.iconRow}>
+      <TouchableOpacity
+      style={styles.iconWrapper}
+      onPress={() => navigation.navigate('LookFinder')}>
+       <Image source={require('../assets/lookFinder.png')} style={styles.icon} />
+       <Text style={styles.iconLabel}>Look Finder</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+       style={styles.iconWrapper}
+       onPress={() => navigation.navigate('Profile')}
+      >
+      <Image source={require('../assets/profile.png')} style={styles.icon} />
+        <Text style={styles.iconLabel}>Profile</Text>
+      </TouchableOpacity>
+
+
+
+      </View>
+
+      <View style={styles.iconRow}>
+      <TouchableOpacity
+  style={styles.iconWrapper}
+  onPress={() => navigation.navigate('Trends')}
+>
+  <Image source={require('../assets/trends.png')} style={styles.icon} />
+  <Text style={styles.iconLabel}>Trends</Text>
+</TouchableOpacity>
+
+<TouchableOpacity
+  style={styles.iconWrapper}
+  onPress={() => navigation.navigate('GlobalStore')}
+>
+  <Image source={require('../assets/globalStore.png')} style={styles.icon} />
+  <Text style={styles.iconLabel}>Global Store</Text>
+</TouchableOpacity>
       </View>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F5F5DC',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  styleFitLogo: {
-    width: 100, // Adjust size as needed
-    height: 100,
-    marginBottom: 20,
-  },
-  greetingText: {
-    fontSize: 18,
-    textAlign: 'center',
-    marginBottom: 30,
-  },
-  logoContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-around',
-    width: '100%',
-  },
-  logoButton: {
-    alignItems: 'center',
-    margin: 10,
+    paddingTop: 60,
   },
   logo: {
-    width: 50,
-    height: 50, // Adjust based on logo size
+    width: 200,
+    height: 200,
+    resizeMode: 'contain',
+    marginBottom: 50,
+    marginTop: -80,
   },
-  logoText: {
-    marginTop: 5,
-    fontSize: 12,
-    textAlign: 'center',
+  welcomeText: {
+    fontSize: 24,
+    fontFamily: 'Montserrat-Bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  subText: {
+    fontSize: 16,
+    fontFamily: 'Montserrat-Bold',
+    color: '#4d6a72',
+    marginBottom: 30,
+  },
+  iconRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '80%',
+    marginBottom: 30,
+    marginTop: 30
+  },
+  iconWrapper: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  icon: {
+    width: 80,
+    height: 80,
+    resizeMode: 'contain',
+    marginBottom: 15,
+  },
+  iconLabel: {
+    fontFamily: 'Montserrat-Bold',
+    fontSize: 14,
+    color: '#333',
   },
 });
-
-export default HomeScreen;
