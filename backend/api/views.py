@@ -433,5 +433,54 @@ def update_profile_name_view(request):
 
     return JsonResponse({'message': 'Name updated successfully'}, status=200)
 
+from django.contrib.auth.hashers import check_password, make_password
+
+@csrf_exempt
+def change_password_view(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    email = data.get('email')
+    old_password = data.get('old_password')
+    new_password = data.get('new_password')
+    confirm_password = data.get('confirm_password')
+
+    if not all([email, old_password, new_password, confirm_password]):
+        return JsonResponse({'error': 'All fields are required'}, status=400)
+
+    # Get user
+    user = supabase.table("login").select("password").eq("email", email).execute()
+    if not user.data:
+        return JsonResponse({'error': 'User not found'}, status=404)
+
+    hashed_password = user.data[0]['password']
+
+    # Check old password
+    if not check_password(old_password, hashed_password):
+        return JsonResponse({'error': 'Old password is incorrect'}, status=401)
+
+    # Validate new password
+    if len(new_password) < 8 or not re.search(r'[A-Z]', new_password) or not re.search(r'\W', new_password):
+        return JsonResponse({'error': 'New password must be at least 8 characters and include one uppercase and one special character'}, status=400)
+
+    if new_password != confirm_password:
+        return JsonResponse({'error': 'New passwords do not match'}, status=400)
+
+    # Hash and update new password
+    new_hashed = make_password(new_password)
+
+    result = supabase.table("login").update({
+        "password": new_hashed
+    }).eq("email", email).execute()
+
+    if not result.data:
+        return JsonResponse({'error': 'Failed to update password'}, status=500)
+
+    return JsonResponse({'message': 'Password changed successfully'}, status=200)
 
 
