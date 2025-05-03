@@ -483,4 +483,98 @@ def change_password_view(request):
 
     return JsonResponse({'message': 'Password changed successfully'}, status=200)
 
+@csrf_exempt
+def search_by_name_view(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+
+    data = json.loads(request.body)
+    email = data.get('email')
+    name = data.get('name')
+
+    if not email or not name:
+        return JsonResponse({'error': 'Email and product name are required'}, status=400)
+
+    result = supabase.table("products").select("*").ilike("name", f"%{name}%").execute()
+
+    return JsonResponse({'results': result.data}, status=200)
+
+@csrf_exempt
+def search_by_store_view(request):
+    data = json.loads(request.body)
+    email = data.get('email')
+    store = data.get('store')
+
+    if not email or not store:
+        return JsonResponse({'error': 'Email and store name are required'}, status=400)
+
+    result = supabase.table("products").select("*").eq("store", store).execute()
+
+    return JsonResponse({'results': result.data}, status=200)
+
+@csrf_exempt
+def filter_by_category_view(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    email = data.get('email')
+    category = data.get('category')  # "top" or "bottom"
+    subtype = data.get('subtype')    # optional
+    gender = data.get('gender')      # "mens" or "womens"
+
+    if not email or not category:
+        return JsonResponse({'error': 'Email and category are required'}, status=400)
+
+    query = supabase.table("products").select("*").eq("type", category)
+
+    if subtype:
+        query = query.eq("subtype", subtype)
+    if gender:
+        query = query.eq("gender", gender)
+
+    result = query.execute()
+    return JsonResponse({'results': result.data}, status=200)
+
+
+@csrf_exempt
+def advanced_search_view(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    email = data.get('email')
+    name = data.get('name')
+    store = data.get('store')
+    category = data.get('category')  # "top", "bottom"
+    subtype = data.get('subtype')    # e.g., "t-shirt"
+    gender = data.get('gender')      # "mens" or "womens"
+
+    if not email:
+        return JsonResponse({'error': 'Email is required'}, status=400)
+
+    query = supabase.table("products").select("*")
+
+    if name:
+        query = query.ilike("name", f"%{name}%")
+    if store:
+        query = query.eq("store", store)
+    if category:
+        query = query.eq("type", category)
+    if subtype:
+        query = query.eq("subtype", subtype)
+    if gender:
+        query = query.eq("gender", gender)
+
+    result = query.execute()
+    return JsonResponse({'results': result.data}, status=200)
+
 
