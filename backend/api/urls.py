@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import signup_view, verify_otp_view, login_view,forgot_password_view,reset_password_view,upload_profile_picture_view,remove_profile_picture_view,view_wardrobe_items_view,remove_wardrobe_item_view,upload_wardrobe_item_view, show_profile_view
+from .views import signup_view, verify_otp_view, login_view,forgot_password_view,reset_password_view,upload_profile_picture_view,remove_profile_picture_view,view_wardrobe_items_view,remove_wardrobe_item_view,upload_wardrobe_item_view, show_profile_view, update_profile_name_view
 
 urlpatterns = [
     path('signup/', signup_view, name='signup'),
@@ -12,5 +12,6 @@ urlpatterns = [
     path('view_wardrobe_items/', view_wardrobe_items_view, name='view_wardrobe_items'),
     path('remove_wardrobe_item/', remove_wardrobe_item_view, name='remove_wardrobe_item'),
     path('upload_wardrobe_item/', upload_wardrobe_item_view, name='upload_wardrobe_item'),
-    path('show_profile/', show_profile_view, name='show_profile')
+    path('show_profile/', show_profile_view, name='show_profile'),
+    path('update_profile_name/', update_profile_name_view, name='update_profile_name')
 ]

@@ -406,4 +406,32 @@ def show_profile_view(request):
         'picture': picture
     }, status=200)
 
+@csrf_exempt
+def update_profile_name_view(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    email = data.get('email')
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
+
+    if not email or not first_name or not last_name:
+        return JsonResponse({'error': 'Email, first name, and last name are required'}, status=400)
+
+    result = supabase.table("login").update({
+        "first_name": first_name,
+        "last_name": last_name
+    }).eq("email", email).execute()
+
+    if not result.data:
+        return JsonResponse({'error': 'Failed to update name'}, status=500)
+
+    return JsonResponse({'message': 'Name updated successfully'}, status=200)
+
+
 
