@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import signup_view, verify_otp_view, login_view,forgot_password_view,reset_password_view,upload_profile_picture_view,remove_profile_picture_view,view_wardrobe_items_view,remove_wardrobe_item_view,upload_wardrobe_item_view, show_profile_view, update_profile_name_view,change_password_view,search_by_name_view,search_by_store_view,filter_by_category_view,advanced_search_view
+from .views import signup_view, verify_otp_view, login_view,forgot_password_view,reset_password_view,upload_profile_picture_view,remove_profile_picture_view,view_wardrobe_items_view,remove_wardrobe_item_view,upload_wardrobe_item_view, show_profile_view, update_profile_name_view,change_password_view,search_by_name_view,search_by_store_view,filter_by_category_view,advanced_search_view,sort_by_price_view
 
 urlpatterns = [
     path('signup/', signup_view, name='signup'),
@@ -18,5 +18,6 @@ urlpatterns = [
     path("search_by_name_view/",search_by_name_view, name='search_by_name_view'),
     path("search_by_store_view/",search_by_store_view, name='search_by_store_view'),
     path("filter_by_category_view/",filter_by_category_view, name='filter_by_category_view'),
-    path("advanced_search_view/",advanced_search_view, name='advanced_search_view')
+    path("advanced_search_view/",advanced_search_view, name='advanced_search_view'),
+    path("sort_by_price_view/",sort_by_price_view, name='sort_by_price_view')
 ]
