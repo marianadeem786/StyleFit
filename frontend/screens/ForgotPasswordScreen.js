@@ -1,35 +1,58 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView } from 'react-native';
+import {
+  View, Text, TextInput, TouchableOpacity,
+  StyleSheet, Image, ScrollView, ActivityIndicator, Alert
+} from 'react-native';
 
 export default function ForgotPasswordScreen({ navigation }) {
   const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleEnterPress = () => {
-    if (email.trim() !== '') {
-      navigation.navigate('EnterOTP');
-    } else {
-      alert('Please enter your email address.');
+  const handleEnterPress = async () => {
+    if (email.trim() === '') {
+      Alert.alert('Error', 'Please enter your email address.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch('http://10.0.2.2:8000/send-reset-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+      setLoading(false);
+
+      if (response.ok) {
+        Alert.alert('Success', 'OTP sent to your email.');
+        navigation.navigate('EnterOTP', { email }); // pass email to next screen
+      } else {
+        Alert.alert('Error', data.error || 'Failed to send OTP');
+      }
+    } catch (error) {
+      setLoading(false);
+      Alert.alert('Error', 'Something went wrong. Please try again.');
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
-        
-        {/* Logo */}
         <Image source={require('../assets/logo.png')} style={styles.logo} resizeMode="contain" />
 
-        {/* Header */}
         <View style={styles.headerBox}>
           <Text style={styles.headerText}>FORGOT PASSWORD?</Text>
         </View>
 
-        {/* Instruction Text */}
         <Text style={styles.instruction}>
           Please enter your email address and we will send you an OTP to change your password.
         </Text>
 
-        {/* Email Input */}
         <Text style={styles.label}>Email</Text>
         <TextInput
           style={styles.input}
@@ -40,11 +63,13 @@ export default function ForgotPasswordScreen({ navigation }) {
           onChangeText={setEmail}
         />
 
-        {/* Enter Button */}
-        <TouchableOpacity style={styles.button} onPress={handleEnterPress}>
-          <Text style={styles.buttonText}>ENTER</Text>
+        <TouchableOpacity style={styles.button} onPress={handleEnterPress} disabled={loading}>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>ENTER</Text>
+          )}
         </TouchableOpacity>
-
       </View>
     </ScrollView>
   );

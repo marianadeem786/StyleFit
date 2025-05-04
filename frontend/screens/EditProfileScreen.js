@@ -1,19 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
+import { supabase } from '../lib/supabase'; // Ensure this is the path to your Supabase client
 
 export default function EditProfileScreen({ navigation }) {
-  const [name, setName] = useState('John Doe');
+  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
-  const [profilePic, setProfilePic] = useState(require('../assets/profilepic.png')); // Replace with your image
+  const [profilePic, setProfilePic] = useState(require('../assets/profilepic.png')); // Replace with default image
+  const [user, setUser] = useState(null);
 
-  const handleSave = () => {
+  useEffect(() => {
+    // Check if user is logged in
+    const getUserData = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) {
+        console.log('Error fetching user:', error);
+        return;
+      }
+      setUser(user);
+      setName(user?.user_metadata?.full_name || '');
+    };
+
+    getUserData();
+  }, []);
+
+  const handleSave = async () => {
     if (!name || !password) {
       Alert.alert('Error', 'Please fill in all fields.');
       return;
     }
-    Alert.alert('Success', 'Profile updated successfully.');
-    // You can add logic here to save the updated info
-    navigation.goBack();
+
+    try {
+      // Call Supabase API to update user profile
+      const updates = {
+        full_name: name,
+        password: password,
+      };
+
+      // Update profile info in Supabase
+      const { error } = await supabase.auth.updateUser(updates);
+
+      if (error) {
+        throw error;
+      }
+
+      Alert.alert('Success', 'Profile updated successfully.');
+      navigation.goBack(); // Go back to previous screen after successful update
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Something went wrong, please try again.');
+    }
   };
 
   return (
@@ -57,6 +92,7 @@ export default function EditProfileScreen({ navigation }) {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

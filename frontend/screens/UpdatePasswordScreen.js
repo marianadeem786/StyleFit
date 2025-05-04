@@ -1,43 +1,67 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // Make sure Expo Vector Icons is installed
+import {
+  View, Text, TextInput, TouchableOpacity,
+  StyleSheet, Image, ScrollView, Alert, ActivityIndicator
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-export default function UpdatePasswordScreen({ navigation }) {
+export default function UpdatePasswordScreen({ navigation, route }) {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleUpdatePassword = () => {
+  // Assume you passed email via route.params from ForgotPassword or OTP screen
+  const email = route?.params?.email;
+
+  const handleUpdatePassword = async () => {
     if (!newPassword || !confirmPassword) {
       Alert.alert('Error', 'Please fill in all fields.');
     } else if (newPassword !== confirmPassword) {
       Alert.alert('Error', 'Passwords do not match.');
     } else {
-      Alert.alert('Success', 'Password updated successfully!', [
-        { text: 'OK', onPress: () => navigation.navigate('Login') },
-      ]);
+      setLoading(true);
+      try {
+        const response = await fetch('http://10.0.2.2:8000/update-password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            new_password: newPassword,
+          }),
+        });
+
+        const data = await response.json();
+        setLoading(false);
+
+        if (response.ok) {
+          Alert.alert('Success', 'Password updated successfully!', [
+            { text: 'OK', onPress: () => navigation.navigate('Login') },
+          ]);
+        } else {
+          Alert.alert('Error', data.error || 'Could not update password');
+        }
+      } catch (error) {
+        setLoading(false);
+        Alert.alert('Error', 'Something went wrong. Please try again.');
+      }
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
-
-        {/* Logo */}
         <Image source={require('../assets/logo.png')} style={styles.logo} resizeMode="contain" />
-
-        {/* Heading */}
         <View style={styles.headingContainer}>
           <Text style={styles.heading}>UPDATE PASSWORD</Text>
         </View>
-
-        {/* Instruction Text */}
         <Text style={styles.instruction}>
           Please enter your new password below to reset your account password.
         </Text>
 
-        {/* New Password Input */}
         <Text style={styles.label}>New Password</Text>
         <View style={styles.passwordContainer}>
           <TextInput
@@ -53,7 +77,6 @@ export default function UpdatePasswordScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {/* Confirm Password Input */}
         <Text style={styles.label}>Confirm Password</Text>
         <View style={styles.passwordContainer}>
           <TextInput
@@ -69,15 +92,18 @@ export default function UpdatePasswordScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {/* Update Button */}
-        <TouchableOpacity style={styles.button} onPress={handleUpdatePassword}>
-          <Text style={styles.buttonText}>UPDATE</Text>
+        <TouchableOpacity style={styles.button} onPress={handleUpdatePassword} disabled={loading}>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>UPDATE</Text>
+          )}
         </TouchableOpacity>
-
       </View>
     </ScrollView>
   );
 }
+
 
 const styles = StyleSheet.create({
   scrollContainer: {

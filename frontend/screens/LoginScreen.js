@@ -1,12 +1,47 @@
-
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View, Text, TextInput, TouchableOpacity,
+  StyleSheet, Image, ScrollView, ActivityIndicator, Alert
+} from 'react-native';
 
 export default function LoginScreen({ navigation }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    // Simulate successful login
-    navigation.navigate('Home');
+  const handleLogin = async () => {
+    if (!username.trim() || !password.trim()) {
+      Alert.alert('Error', 'Please fill in both fields.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch('http://10.0.2.2:8000/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+      setLoading(false);
+
+      if (response.ok) {
+        Alert.alert('Success', 'Logged in successfully');
+        navigation.navigate('Home');
+      } else {
+        Alert.alert('Login Failed', data.error || 'Invalid credentials');
+      }
+    } catch (error) {
+      setLoading(false);
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    }
   };
 
   return (
@@ -19,22 +54,40 @@ export default function LoginScreen({ navigation }) {
         </View>
 
         <Text style={styles.label}>Name</Text>
-        <TextInput style={styles.input} placeholder="" placeholderTextColor="#999" />
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your username"
+          placeholderTextColor="#999"
+          value={username}
+          onChangeText={setUsername}
+        />
 
         <Text style={styles.label}>Password</Text>
-        <TextInput style={styles.input} placeholder="" placeholderTextColor="#999" secureTextEntry />
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your password"
+          placeholderTextColor="#999"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
 
         <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
           <Text style={styles.forgotPassword}>Forgot Password?</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>ENTER</Text>
+        <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>ENTER</Text>
+          )}
         </TouchableOpacity>
       </View>
     </ScrollView>
   );
 }
+
 const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,

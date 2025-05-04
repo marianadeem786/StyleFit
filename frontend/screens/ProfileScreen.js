@@ -1,163 +1,258 @@
-import React, { useLayoutEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
+import React, { useEffect, useState } from "react";
+import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, Alert } from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import { supabase } from "../lib/supabase";
 
-export default function ProfileScreen({ navigation }) {
-  
-  // Using useLayoutEffect to customize the header
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerLeft: () => (
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
-          <Image source={require('../assets/backicon.png')} style={styles.icon} />
-        </TouchableOpacity>
-      ),
-      headerRight: () => (
-        <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.iconButton}>
-          <Image source={require('../assets/homeicon.png')} style={styles.icon} />
-        </TouchableOpacity>
-      ),
-      headerTitle: null, // Remove the page title
+const ProfileScreen = () => {
+  const [profile, setProfile] = useState(null);
+  const [wardrobe, setWardrobe] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProfile();
+    fetchWardrobe();
+  }, []);
+
+  const fetchProfile = async () => {
+    const { data: { user }, error } = await supabase.auth.getUser();
+
+    if (error || !user) {
+      Alert.alert("Error", "Unable to fetch user.");
+      return;
+    }
+
+    const { data, error: profileError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError) {
+      Alert.alert("Error", "Could not fetch profile.");
+    } else {
+      setProfile(data);
+    }
+  };
+
+  const fetchWardrobe = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const { data, error } = await supabase
+      .from("wardrobe")
+      .select("*")
+      .eq("user_id", user.id);
+
+    if (error) {
+      console.log("Error fetching wardrobe", error);
+    } else {
+      setWardrobe(data);
+    }
+
+    setLoading(false);
+  };
+
+  const handleUploadProfilePicture = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status !== "granted") {
+      Alert.alert("Permission Denied", "Permission to access media library is required!");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+      allowsEditing: true,
     });
-  }, [navigation]);
+
+    if (!result.canceled) {
+      const image = result.assets[0];
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData?.session?.user?.id;
+
+      const fileExt = image.uri.split(".").pop();
+      const fileName = `${userId}.${fileExt}`;
+      const filePath = `profile_pictures/${fileName}`;
+
+      const response = await fetch(image.uri);
+      const blob = await response.blob();
+
+      const { error: uploadError } = await supabase.storage
+        .from("profile-pictures")
+        .upload(filePath, blob, { upsert: true });
+
+      if (uploadError) {
+        Alert.alert("Upload Error", uploadError.message);
+        return;
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from("profile-pictures")
+        .getPublicUrl(filePath);
+
+      const profile_picture_url = publicUrlData.publicUrl;
+
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({ profile_picture: profile_picture_url })
+        .eq("id", userId);
+
+      if (updateError) {
+        Alert.alert("Update Error", updateError.message);
+      } else {
+        fetchProfile();
+      }
+    }
+  };
+
+  const handleRemoveProfilePicture = async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const userId = sessionData?.session?.user?.id;
+
+    const { error } = await supabase
+      .from("users")
+      .update({ profile_picture: null })
+      .eq("id", userId);
+
+    if (error) {
+      Alert.alert("Error", "Could not remove profile picture.");
+    } else {
+      fetchProfile();
+    }
+  };
+
+  const handleRemoveWardrobeItem = async (itemId) => {
+    const { error } = await supabase
+      .from("wardrobe")
+      .delete()
+      .eq("id", itemId);
+
+    if (error) {
+      Alert.alert("Error", "Could not delete item.");
+    } else {
+      fetchWardrobe();
+    }
+  };
+
+  const renderWardrobeItem = ({ item }) => (
+    <View style={styles.wardrobeItem}>
+      <Image source={{ uri: item.image_url }} style={styles.wardrobeImage} />
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={() => handleRemoveWardrobeItem(item.id)}
+      >
+        <Text style={styles.deleteText}>✕</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  if (loading) return <Text style={styles.loading}>Loading...</Text>;
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <View style={styles.container}>
-        {/* Profile Picture */}
-        <View style={styles.profileContainer}>
-          <Image
-            source={require('../assets/profilepic.png')} // Add your profile image here
-            style={styles.profilePic}
-          />
-        </View>
+    <View style={styles.container}>
+      <TouchableOpacity onPress={handleUploadProfilePicture}>
+        {profile?.profile_picture ? (
+          <Image source={{ uri: profile.profile_picture }} style={styles.profileImage} />
+        ) : (
+          <View style={styles.profilePlaceholder}>
+            <Text style={styles.placeholderText}>Upload Photo</Text>
+          </View>
+        )}
+      </TouchableOpacity>
 
-        {/* Header Label */}
-        <View style={styles.headerBox}>
-          <Text style={styles.headerText}>PROFILE</Text>
-        </View>
-
-        {/* Full Name */}
-        <Text style={styles.label}>Full Name</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="John Doe"
-          placeholderTextColor="#888"
-          editable={false}
-        />
-
-        {/* Email */}
-        <Text style={styles.label}>Email</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="john@example.com"
-          placeholderTextColor="#888"
-          editable={false}
-        />
-
-        {/* Edit Profile Button */}
-        <TouchableOpacity
-  style={styles.button}
-  onPress={() => navigation.navigate('EditProfile')}
->
-  <Text style={styles.buttonText}>EDIT PROFILE</Text>
-</TouchableOpacity>
-
-
-        {/* Wardrobe Button */}
-        <TouchableOpacity style={styles.wardrobeButton}>
-          <Text style={styles.wardrobeButtonText}>WARDROBE</Text>
+      {profile?.profile_picture && (
+        <TouchableOpacity onPress={handleRemoveProfilePicture}>
+          <Text style={styles.removeText}>Remove Picture</Text>
         </TouchableOpacity>
-      </View>
-    </ScrollView>
+      )}
+
+      <Text style={styles.username}>{profile?.username || "User"}</Text>
+
+      <Text style={styles.sectionTitle}>Your Wardrobe</Text>
+      <FlatList
+        data={wardrobe}
+        renderItem={renderWardrobeItem}
+        keyExtractor={(item) => item.id.toString()}
+        numColumns={2}
+        contentContainerStyle={styles.wardrobeList}
+      />
+    </View>
   );
-}
+};
+
+export default ProfileScreen;
 
 const styles = StyleSheet.create({
-  scrollContainer: {
-    flexGrow: 1,
-    backgroundColor: '#f7f5d9',
-  },
   container: {
     flex: 1,
-    alignItems: 'center',
-    paddingTop: 10,
-    paddingBottom: 50,
+    padding: 20,
+    backgroundColor: "#fff",
+    alignItems: "center",
   },
-  profileContainer: {
-    marginBottom: 20,
-  },
-  profilePic: {
+  profileImage: {
     width: 120,
     height: 120,
-    borderRadius: 60,  // Make it circular
-    borderWidth: 1,
-    borderColor: '#333',
+    borderRadius: 60,
+    marginBottom: 10,
   },
-  headerBox: {
-    backgroundColor: '#4d6a72',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderTopRightRadius: 20,
-    borderBottomRightRadius: 20,
-    alignSelf: 'flex-start',
-    marginLeft: 20,
-    marginTop: 20,
+  profilePlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "#eee",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  placeholderText: {
+    color: "#888",
+  },
+  removeText: {
+    color: "#f00",
+    marginBottom: 10,
+  },
+  username: {
+    fontSize: 20,
+    fontWeight: "bold",
     marginBottom: 20,
   },
-  headerText: {
-    color: 'white',
+  sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    fontFamily: 'serif',
-    textTransform: 'uppercase',
-  },
-  label: {
-    alignSelf: 'flex-start',
-    marginLeft: 40,
-    fontSize: 16,
-    color: '#333',
-    marginBottom: 5,
-  },
-  input: {
-    width: '80%',
-    backgroundColor: '#e0e0e0',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    fontSize: 16,
-    marginBottom: 15,
-  },
-  button: {
-    backgroundColor: '#4d6a72',
-    paddingHorizontal: 40,
-    paddingVertical: 12,
-    borderRadius: 20,
+    fontWeight: "600",
     marginTop: 20,
+    marginBottom: 10,
+    alignSelf: "flex-start",
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+  wardrobeList: {
+    width: "100%",
   },
-  wardrobeButton: {
-    backgroundColor: '#4d6a72',
-    paddingVertical: 10,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-    marginTop: 20,
+  wardrobeItem: {
+    width: "48%",
+    margin: "1%",
+    aspectRatio: 1,
+    position: "relative",
   },
-  wardrobeButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontFamily: 'serif',
-    letterSpacing: 1,
+  wardrobeImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 10,
   },
-  iconButton: {
-    paddingHorizontal: 15,
+  deleteButton: {
+    position: "absolute",
+    top: 5,
+    right: 5,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    borderRadius: 12,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
   },
-  icon: {
-    width: 30,  // Adjust size as needed
-    height: 30, // Adjust size as needed
-    tintColor: '#8888FF', // Set the color of the icons
+  deleteText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  loading: {
+    marginTop: 50,
+    fontSize: 18,
   },
 });

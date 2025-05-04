@@ -1,18 +1,66 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, Image, StyleSheet, ActivityIndicator } from 'react-native';
+import { supabase } from '../lib/supabase';
 
 export default function LandingScreen({ navigation }) {
+  const [loading, setLoading] = useState(true);
+  const [userEmail, setUserEmail] = useState(null);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        console.log("Error getting session:", sessionError.message);
+        setLoading(false);
+        return;
+      }
+
+      if (session && session.user) {
+        setUserEmail(session.user.email);
+
+        // Optional: Get full user info
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+
+        if (userError) {
+          console.log("Error fetching user data:", userError.message);
+        } else {
+          console.log("User data:", userData.user);
+        }
+
+        navigation.replace('Profile'); // Redirect if logged in
+      }
+
+      setLoading(false);
+    };
+
+    checkSession();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#4d6a72" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      
       {/* Logo */}
-      <Image 
-        source={require('../assets/logo.png')} // Replace with your logo file
+      <Image
+        source={require('../assets/logo.png')}
         style={styles.logo}
         resizeMode="contain"
       />
 
-     
+      {/* Greeting */}
+      {userEmail && (
+        <Text style={styles.slogan}>Welcome back, {userEmail}!</Text>
+      )}
 
       {/* Sign Up Button */}
       <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('SignUp')}>
@@ -24,9 +72,8 @@ export default function LandingScreen({ navigation }) {
         <Text style={styles.buttonText}>LOG IN</Text>
       </TouchableOpacity>
 
-      {/* Already have an account */}
+      {/* Footer Text */}
       <Text style={styles.footerText}>Already have an account?</Text>
-
     </View>
   );
 }
