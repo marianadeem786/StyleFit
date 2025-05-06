@@ -540,6 +540,25 @@ def filter_by_category_view(request):
     result = query.execute()
     return JsonResponse({'results': result.data}, status=200)
 
+@csrf_exempt
+def sort_by_price_view(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    email = data.get('email')
+    order = data.get('order')  # "high" or "low"
+
+    if not email or order not in ['high', 'low']:
+        return JsonResponse({'error': 'Email and valid order required'}, status=400)
+
+    result = supabase.table("products").select("*").order("price", desc=(order == 'high')).execute()
+
+    return JsonResponse({'results': result.data}, status=200)
 
 @csrf_exempt
 def advanced_search_view(request):
@@ -557,6 +576,7 @@ def advanced_search_view(request):
     category = data.get('category')  # "top", "bottom"
     subtype = data.get('subtype')    # e.g., "t-shirt"
     gender = data.get('gender')      # "mens" or "womens"
+    order = data.get('order')        # "high" or "low" (optional)
 
     if not email:
         return JsonResponse({'error': 'Email is required'}, status=400)
@@ -573,8 +593,11 @@ def advanced_search_view(request):
         query = query.eq("subtype", subtype)
     if gender:
         query = query.eq("gender", gender)
+    if order in ['high', 'low']:
+        query = query.order("price", desc=(order == "high"))
 
     result = query.execute()
     return JsonResponse({'results': result.data}, status=200)
+
 
 
