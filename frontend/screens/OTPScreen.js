@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, Alert } from 'react-native';
+import config from '../config';
+import {
+  View, Text, TextInput, TouchableOpacity,
+  StyleSheet, Image, ScrollView, Alert
+} from 'react-native';
 
-export default function EnterOTPScreen({ route, navigation }) {
+export default function EnterOTPScreen({ navigation, route }) {
   const [otp, setOtp] = useState(['', '', '', '']);
-  const email = route.params?.email;
+
+  const { email, purpose } = route.params;
 
   const handleOtpChange = (text, index) => {
     const newOtp = [...otp];
@@ -13,25 +18,27 @@ export default function EnterOTPScreen({ route, navigation }) {
 
   const handleSend = async () => {
     const enteredOtp = otp.join('');
-
     try {
-      const response = await fetch('http://10.0.2.2:8000/verify-otp/', {
+      const res = await fetch(`${config.BACKEND_URL}/api/verify-otp/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp: enteredOtp }),
       });
-      
 
-      const data = await response.json();
-      if (response.status === 200) {
-        Alert.alert('Verified!', 'OTP is correct.');
-        navigation.navigate('UpdatePassword');
+      const data = await res.json();
+
+      if (res.ok) {
+        Alert.alert('Success', data.message || 'OTP verified!');
+        if (purpose === 'reset_password') {
+          navigation.navigate('UpdatePassword', { email });
+        } else if (purpose === 'signup') {
+          navigation.navigate('Login');
+        }
       } else {
-        Alert.alert('Invalid OTP', data.error || 'Please try again.');
+        Alert.alert('Error', data.error || 'Invalid OTP.');
       }
     } catch (error) {
-      Alert.alert('Error', 'Network error.');
-      console.error(error);
+      Alert.alert('Error', 'Verification failed. Please try again.');
     }
   };
 
@@ -57,7 +64,7 @@ export default function EnterOTPScreen({ route, navigation }) {
           ))}
         </View>
 
-        <TouchableOpacity onPress={() => {/* implement resend OTP */}}>
+        <TouchableOpacity onPress={() => {}}>
           <Text style={styles.resendText}>Resend OTP?</Text>
         </TouchableOpacity>
 

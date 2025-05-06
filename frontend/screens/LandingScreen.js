@@ -1,120 +1,86 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, ActivityIndicator } from 'react-native';
-import { supabase } from '../lib/supabase';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import * as Font from 'expo-font';
+import config from '../config';
 
-export default function LandingScreen({ navigation }) {
-  const [loading, setLoading] = useState(true);
-  const [userEmail, setUserEmail] = useState(null);
+
+export default function GetStartedScreen({ navigation }) {
+  const [fontsLoaded, setFontsLoaded] = useState(false);
 
   useEffect(() => {
-    const checkSession = async () => {
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession();
-
-      if (sessionError) {
-        console.log("Error getting session:", sessionError.message);
-        setLoading(false);
-        return;
-      }
-
-      if (session && session.user) {
-        setUserEmail(session.user.email);
-
-        // Optional: Get full user info
-        const { data: userData, error: userError } = await supabase.auth.getUser();
-
-        if (userError) {
-          console.log("Error fetching user data:", userError.message);
-        } else {
-          console.log("User data:", userData.user);
-        }
-
-        navigation.replace('Profile'); // Redirect if logged in
-      }
-
-      setLoading(false);
+    const loadFonts = async () => {
+      await Font.loadAsync({
+        'Montserrat-Bold': require('../assets/Montserrat-Bold.ttf'),
+      });
+      setFontsLoaded(true);
     };
 
-    checkSession();
+    loadFonts();
   }, []);
 
-  if (loading) {
+  if (!fontsLoaded) {
     return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#4d6a72" />
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#50808E" />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      {/* Logo */}
-      <Image
-        source={require('../assets/logo.png')}
-        style={styles.logo}
-        resizeMode="contain"
-      />
-
-      {/* Greeting */}
-      {userEmail && (
-        <Text style={styles.slogan}>Welcome back, {userEmail}!</Text>
-      )}
+      <Image source={require('../assets/logo.png')} style={styles.logo} />
 
       {/* Sign Up Button */}
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('SignUp')}>
-        <Text style={styles.buttonText}>SIGN UP</Text>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('SignUp')} // Navigate to SignUpScreen
+      >
+        <Text style={styles.buttonText}>Sign Up</Text>
       </TouchableOpacity>
 
-      {/* Log In Button */}
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Login')}>
-        <Text style={styles.buttonText}>LOG IN</Text>
+      {/* Login Button */}
+      <TouchableOpacity
+        style={[styles.button, styles.loginButton]} // Added different style for distinction
+        onPress={() => navigation.navigate('Login')} // Navigate to LoginScreen
+      >
+        <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
-
-      {/* Footer Text */}
-      <Text style={styles.footerText}>Already have an account?</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F5DC',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#f7f5d9', // light pastel background
+    backgroundColor: '#F5F5DC',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
   },
   logo: {
-    width: 350,
-    height: 350,
-    marginBottom: 10,
-  },
-  slogan: {
-    fontSize: 16,
-    color: '#333',
-    marginBottom: 30,
-    fontFamily: 'sans-serif-medium',
+    width: 400,
+    height: 400,
+    marginBottom: 40,
   },
   button: {
-    backgroundColor: '#4d6a72', // blueish button color
+    backgroundColor: '#50808E',
     paddingVertical: 15,
-    paddingHorizontal: 50,
-    borderRadius: 30,
-    marginVertical: 10,
-    width: '80%',
-    alignItems: 'center',
+    paddingHorizontal: 25,
+    borderRadius: 25,
+    marginTop: 20,
+  },
+  loginButton: {
+    marginTop: 10, // Slight margin difference for distinction
+    backgroundColor: '#607B7F', // Different color for login button
   },
   buttonText: {
-    color: '#ffffff',
-    fontSize: 18,
-    letterSpacing: 1,
-    fontWeight: '600',
-  },
-  footerText: {
-    marginTop: 20,
-    color: '#333',
-    fontSize: 14,
+    color: '#fff',
+    fontSize: 20,
+    fontFamily: 'Montserrat-Bold',
   },
 });

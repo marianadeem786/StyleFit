@@ -1,20 +1,22 @@
-from pathlib import Path
 import os
-from dotenv import load_dotenv
+import environ
+from pathlib import Path
 
-# Load .env variables
-load_dotenv()
+# Initialize the environment variables
+env = environ.Env()
+# Reading the .env file
+environ.Env.read_env(os.path.join(Path(__file__).resolve().parent.parent, '.env'))
 
-# Base directory
+# Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-default")
+SECRET_KEY = env('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool('DEBUG', default=True)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['*'])
 
 # Application definition
 INSTALLED_APPS = [
@@ -24,10 +26,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'api',  # Your app
+    'api',
+    'rest_framework',
+    'corsheaders',
+    'backend',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -46,6 +52,7 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -56,7 +63,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
-# Default SQLite (you can replace with PostgreSQL/Supabase if needed)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -64,7 +70,6 @@ DATABASES = {
     }
 }
 
-# Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -80,26 +85,38 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Internationalization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
 
-# Default primary key field type
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Email configuration (Gmail SMTP)
+CORS_ALLOW_ALL_ORIGINS = True
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ],
+}
+
+# ✅ Email settings for Gmail SMTP
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 
-# Supabase environment variables (used via supabase_client.py)
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+# ✅ Supabase
+SUPABASE_URL = env('SUPABASE_URL')
+SUPABASE_KEY = env('SUPABASE_KEY')

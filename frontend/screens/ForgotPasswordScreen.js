@@ -1,58 +1,61 @@
 import React, { useState } from 'react';
+import config from '../config';
 import {
-  View, Text, TextInput, TouchableOpacity,
-  StyleSheet, Image, ScrollView, ActivityIndicator, Alert
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  ScrollView,
+  Alert,
 } from 'react-native';
+
 
 export default function ForgotPasswordScreen({ navigation }) {
   const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  const handleEnterPress = async () => {
-    if (email.trim() === '') {
-      Alert.alert('Error', 'Please enter your email address.');
+  const handleForgotPassword = async () => {
+    if (!email) {
+      Alert.alert('Error', 'Email is required.');
       return;
     }
-
-    setLoading(true);
-
     try {
-      const response = await fetch('http://10.0.2.2:8000/send-reset-otp', {
+      const res = await fetch(`${config.BACKEND_URL}/api/forgot_password/`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-
-      const data = await response.json();
-      setLoading(false);
-
-      if (response.ok) {
-        Alert.alert('Success', 'OTP sent to your email.');
-        navigation.navigate('EnterOTP', { email }); // pass email to next screen
+      const data = await res.json();
+      if (res.ok) {
+        Alert.alert('Success', data.message);
+        navigation.navigate('EnterOTP', { email }); // Navigate to OTPScreen with email
       } else {
-        Alert.alert('Error', data.error || 'Failed to send OTP');
+        Alert.alert('Error', data.error || 'Something went wrong.');
       }
     } catch (error) {
-      setLoading(false);
-      Alert.alert('Error', 'Something went wrong. Please try again.');
+      Alert.alert('Error', 'Network error.');
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
+
+        {/* Logo */}
         <Image source={require('../assets/logo.png')} style={styles.logo} resizeMode="contain" />
 
+        {/* Header */}
         <View style={styles.headerBox}>
           <Text style={styles.headerText}>FORGOT PASSWORD?</Text>
         </View>
 
+        {/* Instruction */}
         <Text style={styles.instruction}>
           Please enter your email address and we will send you an OTP to change your password.
         </Text>
 
+        {/* Email Input */}
         <Text style={styles.label}>Email</Text>
         <TextInput
           style={styles.input}
@@ -63,13 +66,11 @@ export default function ForgotPasswordScreen({ navigation }) {
           onChangeText={setEmail}
         />
 
-        <TouchableOpacity style={styles.button} onPress={handleEnterPress} disabled={loading}>
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>ENTER</Text>
-          )}
+        {/* Submit Button */}
+        <TouchableOpacity style={styles.button} onPress={handleForgotPassword}>
+          <Text style={styles.buttonText}>ENTER</Text>
         </TouchableOpacity>
+
       </View>
     </ScrollView>
   );

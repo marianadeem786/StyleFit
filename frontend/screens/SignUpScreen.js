@@ -1,45 +1,48 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, Alert } from 'react-native';
+import config from '../config';
 
 export default function CreateAccountScreen({ navigation }) {
-  const [fullName, setFullName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleSignup = async () => {
-    if (!fullName || !email || !password || !confirmPassword) {
+  // Function to handle sign up
+  const handleSignUp = async () => {
+    if (!firstName || !lastName || !email || !password || !confirmPassword) {
       Alert.alert('Error', 'All fields are required.');
       return;
     }
 
-    const nameParts = fullName.trim().split(' ');
-    const first_name = nameParts[0];
-    const last_name = nameParts.slice(1).join(' ') || ' ';
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match.');
+      return;
+    }
 
     try {
-      const response = await fetch('http://10.0.2.2:8000/signup/', {
+      const res = await fetch(`${config.BACKEND_URL}/api/signup/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,
           password,
           confirm_password: confirmPassword,
-          first_name,
-          last_name,
+          first_name: firstName,
+          last_name: lastName,
         }),
-      });      
+      });
 
-      const data = await response.json();
-      if (response.status === 201) {
-        Alert.alert('Success', data.message);
-        navigation.navigate('EnterOTP', { email }); // pass email for OTP screen
+      const data = await res.json();
+      if (res.ok) {
+        Alert.alert('Success', data.message || 'Account created successfully!');
+        navigation.navigate('EnterOTP', { email, purpose: 'signup' }); // Navigate to login screen after successful sign-up
       } else {
-        Alert.alert('Error', data.error || 'Something went wrong.');
+        Alert.alert('Error', data.error || 'Signup failed.');
       }
     } catch (error) {
-      Alert.alert('Error', 'Network error occurred.');
-      console.error(error);
+      Alert.alert('Error', 'Network error.');
     }
   };
 
@@ -52,26 +55,61 @@ export default function CreateAccountScreen({ navigation }) {
           <Text style={styles.headerText}>CREATE YOUR ACCOUNT</Text>
         </View>
 
-        <Text style={styles.label}>Full Name</Text>
-        <TextInput style={styles.input} value={fullName} onChangeText={setFullName} placeholder="John Doe" />
+        <Text style={styles.label}>First Name</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter first name"
+          placeholderTextColor="#999"
+          value={firstName}
+          onChangeText={setFirstName}
+        />
+
+        <Text style={styles.label}>Last Name</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter last name"
+          placeholderTextColor="#999"
+          value={lastName}
+          onChangeText={setLastName}
+        />
 
         <Text style={styles.label}>Email</Text>
-        <TextInput style={styles.input} value={email} onChangeText={setEmail} keyboardType="email-address" />
+        <TextInput
+          style={styles.input}
+          placeholder="Enter email"
+          placeholderTextColor="#999"
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
+        />
 
         <Text style={styles.label}>Password</Text>
-        <TextInput style={styles.input} value={password} onChangeText={setPassword} secureTextEntry />
+        <TextInput
+          style={styles.input}
+          placeholder="Enter password"
+          placeholderTextColor="#999"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
 
         <Text style={styles.label}>Confirm Password</Text>
-        <TextInput style={styles.input} value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry />
+        <TextInput
+          style={styles.input}
+          placeholder="Confirm password"
+          placeholderTextColor="#999"
+          secureTextEntry
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+        />
 
-        <TouchableOpacity style={styles.button} onPress={handleSignup}>
+        <TouchableOpacity style={styles.button} onPress={handleSignUp}>
           <Text style={styles.buttonText}>VERIFY</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
   );
 }
-
 
 const styles = StyleSheet.create({
   scrollContainer: {

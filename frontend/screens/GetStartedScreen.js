@@ -1,50 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import * as Font from 'expo-font';
-import { supabase } from '../lib/supabase'; // Make sure this is the path to your supabase client
+import config from '../config';
+
 
 export default function GetStartedScreen({ navigation }) {
   const [fontsLoaded, setFontsLoaded] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const loadFonts = async () => {
-      await Font.loadAsync({
-        'Montserrat-Bold': require('../assets/Montserrat-Bold.ttf'),
-      });
-      setFontsLoaded(true);
-    };
-
-    loadFonts();
-    checkUserLoggedIn();
+  
+  // Memoized function for loading fonts
+  const loadFonts = useCallback(async () => {
+    await Font.loadAsync({
+      'Montserrat-Bold': require('../assets/Montserrat-Bold.ttf'),
+    });
+    setFontsLoaded(true);
   }, []);
 
-  const checkUserLoggedIn = async () => {
-    // Check if the user is logged in
-    const { data: { user }, error } = await supabase.auth.getUser();
-
-    if (error) {
-      console.log('Error checking user status:', error);
-      setLoading(false);
-      return;
-    }
-
-    if (user) {
-      // User is logged in, redirect to the main screen (LandingScreen or HomeScreen)
-      navigation.navigate('LandingScreen'); // Or HomeScreen, depending on your app flow
-    } else {
-      // User is not logged in, stay on GetStartedScreen or navigate to login/signup screen
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#50808E" />
-      </View>
-    );
-  }
+  useEffect(() => {
+    loadFonts();
+  }, [loadFonts]);
 
   if (!fontsLoaded) {
     return (
@@ -59,7 +32,7 @@ export default function GetStartedScreen({ navigation }) {
       <Image source={require('../assets/logo.png')} style={styles.logo} />
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.navigate('LandingScreen')} // <-- adjust target screen
+        onPress={() => navigation.navigate('LandingScreen')} // Ensure LandingScreen is registered
       >
         <Text style={styles.buttonText}>Get Started</Text>
       </TouchableOpacity>
@@ -81,8 +54,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logo: {
-    width: 400,
-    height: 400,
+    width: 300, // Reduced size for faster loading
+    height: 300, // Reduced size for faster loading
     marginBottom: 40,
   },
   button: {
@@ -90,7 +63,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: 25,
     borderRadius: 25,
-    marginTop: -60,
+    marginTop: -40, // Adjusted margin for better layout
   },
   buttonText: {
     color: '#fff',

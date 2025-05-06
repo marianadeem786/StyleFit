@@ -1,146 +1,22 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import config from '../config';
+
 import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, Alert } from "react-native";
-import * as ImagePicker from "expo-image-picker";
-import { supabase } from "../lib/supabase";
 
-const ProfileScreen = () => {
-  const [profile, setProfile] = useState(null);
-  const [wardrobe, setWardrobe] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchProfile();
-    fetchWardrobe();
-  }, []);
-
-  const fetchProfile = async () => {
-    const { data: { user }, error } = await supabase.auth.getUser();
-
-    if (error || !user) {
-      Alert.alert("Error", "Unable to fetch user.");
-      return;
-    }
-
-    const { data, error: profileError } = await supabase
-      .from("users")
-      .select("*")
-      .eq("id", user.id)
-      .single();
-
-    if (profileError) {
-      Alert.alert("Error", "Could not fetch profile.");
-    } else {
-      setProfile(data);
-    }
-  };
-
-  const fetchWardrobe = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-
-    const { data, error } = await supabase
-      .from("wardrobe")
-      .select("*")
-      .eq("user_id", user.id);
-
-    if (error) {
-      console.log("Error fetching wardrobe", error);
-    } else {
-      setWardrobe(data);
-    }
-
-    setLoading(false);
-  };
-
-  const handleUploadProfilePicture = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (status !== "granted") {
-      Alert.alert("Permission Denied", "Permission to access media library is required!");
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
-      allowsEditing: true,
-    });
-
-    if (!result.canceled) {
-      const image = result.assets[0];
-
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData?.session?.user?.id;
-
-      const fileExt = image.uri.split(".").pop();
-      const fileName = `${userId}.${fileExt}`;
-      const filePath = `profile_pictures/${fileName}`;
-
-      const response = await fetch(image.uri);
-      const blob = await response.blob();
-
-      const { error: uploadError } = await supabase.storage
-        .from("profile-pictures")
-        .upload(filePath, blob, { upsert: true });
-
-      if (uploadError) {
-        Alert.alert("Upload Error", uploadError.message);
-        return;
-      }
-
-      const { data: publicUrlData } = supabase.storage
-        .from("profile-pictures")
-        .getPublicUrl(filePath);
-
-      const profile_picture_url = publicUrlData.publicUrl;
-
-      const { error: updateError } = await supabase
-        .from("users")
-        .update({ profile_picture: profile_picture_url })
-        .eq("id", userId);
-
-      if (updateError) {
-        Alert.alert("Update Error", updateError.message);
-      } else {
-        fetchProfile();
-      }
-    }
-  };
-
-  const handleRemoveProfilePicture = async () => {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const userId = sessionData?.session?.user?.id;
-
-    const { error } = await supabase
-      .from("users")
-      .update({ profile_picture: null })
-      .eq("id", userId);
-
-    if (error) {
-      Alert.alert("Error", "Could not remove profile picture.");
-    } else {
-      fetchProfile();
-    }
-  };
-
-  const handleRemoveWardrobeItem = async (itemId) => {
-    const { error } = await supabase
-      .from("wardrobe")
-      .delete()
-      .eq("id", itemId);
-
-    if (error) {
-      Alert.alert("Error", "Could not delete item.");
-    } else {
-      fetchWardrobe();
-    }
-  };
-
+const ProfileScreen = ({
+  profile,
+  wardrobe,
+  loading,
+  onUploadProfilePicture,
+  onRemoveProfilePicture,
+  onRemoveWardrobeItem,
+}) => {
   const renderWardrobeItem = ({ item }) => (
     <View style={styles.wardrobeItem}>
       <Image source={{ uri: item.image_url }} style={styles.wardrobeImage} />
       <TouchableOpacity
         style={styles.deleteButton}
-        onPress={() => handleRemoveWardrobeItem(item.id)}
+        onPress={() => onRemoveWardrobeItem(item.id)}
       >
         <Text style={styles.deleteText}>✕</Text>
       </TouchableOpacity>
@@ -151,7 +27,7 @@ const ProfileScreen = () => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={handleUploadProfilePicture}>
+      <TouchableOpacity onPress={onUploadProfilePicture}>
         {profile?.profile_picture ? (
           <Image source={{ uri: profile.profile_picture }} style={styles.profileImage} />
         ) : (
@@ -162,7 +38,7 @@ const ProfileScreen = () => {
       </TouchableOpacity>
 
       {profile?.profile_picture && (
-        <TouchableOpacity onPress={handleRemoveProfilePicture}>
+        <TouchableOpacity onPress={onRemoveProfilePicture}>
           <Text style={styles.removeText}>Remove Picture</Text>
         </TouchableOpacity>
       )}

@@ -1,46 +1,33 @@
 import React, { useState } from 'react';
-import {
-  View, Text, TextInput, TouchableOpacity,
-  StyleSheet, Image, ScrollView, ActivityIndicator, Alert
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, Alert } from 'react-native';
+import config from '../config';
 
 export default function LoginScreen({ navigation }) {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!username.trim() || !password.trim()) {
-      Alert.alert('Error', 'Please fill in both fields.');
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter both email and password.');
       return;
     }
 
-    setLoading(true);
-
     try {
-      const response = await fetch('http://10.0.2.2:8000/login', {
+      const res = await fetch(`${config.BACKEND_URL}/api/login/`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username,
-          password,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
-      setLoading(false);
-
-      if (response.ok) {
-        Alert.alert('Success', 'Logged in successfully');
+      const data = await res.json();
+      if (res.ok) {
+        Alert.alert('Success', 'Login successful!');
         navigation.navigate('Home');
       } else {
-        Alert.alert('Login Failed', data.error || 'Invalid credentials');
+        Alert.alert('Error', data.error || 'Login failed.');
       }
     } catch (error) {
-      setLoading(false);
-      Alert.alert('Error', 'Something went wrong. Please try again.');
+      Alert.alert('Error', 'Network error.');
     }
   };
 
@@ -53,19 +40,19 @@ export default function LoginScreen({ navigation }) {
           <Text style={styles.headerText}>LOG INTO YOUR ACCOUNT</Text>
         </View>
 
-        <Text style={styles.label}>Name</Text>
+        <Text style={styles.label}>Email</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter your username"
+          placeholder="Enter email"
           placeholderTextColor="#999"
-          value={username}
-          onChangeText={setUsername}
+          value={email}
+          onChangeText={setEmail}
         />
 
         <Text style={styles.label}>Password</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter your password"
+          placeholder="Enter password"
           placeholderTextColor="#999"
           secureTextEntry
           value={password}
@@ -76,12 +63,8 @@ export default function LoginScreen({ navigation }) {
           <Text style={styles.forgotPassword}>Forgot Password?</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>ENTER</Text>
-          )}
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+          <Text style={styles.buttonText}>ENTER</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

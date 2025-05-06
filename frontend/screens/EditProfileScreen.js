@@ -1,53 +1,54 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
-import { supabase } from '../lib/supabase'; // Ensure this is the path to your Supabase client
+import React, { useState } from 'react';
+import config from '../config';
 
-export default function EditProfileScreen({ navigation }) {
-  const [name, setName] = useState('');
-  const [password, setPassword] = useState('');
-  const [profilePic, setProfilePic] = useState(require('../assets/profilepic.png')); // Replace with default image
-  const [user, setUser] = useState(null);
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  Alert,
+  Button,
+} from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 
-  useEffect(() => {
-    // Check if user is logged in
-    const getUserData = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error) {
-        console.log('Error fetching user:', error);
-        return;
-      }
-      setUser(user);
-      setName(user?.user_metadata?.full_name || '');
-    };
+export default function EditProfileScreen({ route, navigation }) {
+  const {
+    email,
+    imageUri,
+    setImageUri,
+    handleUploadProfilePicture,
+    handleRemoveProfilePicture,
+    firstName,
+    lastName,
+    setFirstName,
+    setLastName,
+    handleUpdateProfileName,
+    password,
+    newPassword,
+    confirmNewPassword,
+    setPassword,
+    setNewPassword,
+    setConfirmNewPassword,
+    handleChangePassword,
+  } = route.params;
 
-    getUserData();
-  }, []);
+  const pickImage = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-  const handleSave = async () => {
-    if (!name || !password) {
-      Alert.alert('Error', 'Please fill in all fields.');
+    if (!permissionResult.granted) {
+      Alert.alert("Permission Required", "Permission to access media library is required!");
       return;
     }
 
-    try {
-      // Call Supabase API to update user profile
-      const updates = {
-        full_name: name,
-        password: password,
-      };
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+    });
 
-      // Update profile info in Supabase
-      const { error } = await supabase.auth.updateUser(updates);
-
-      if (error) {
-        throw error;
-      }
-
-      Alert.alert('Success', 'Profile updated successfully.');
-      navigation.goBack(); // Go back to previous screen after successful update
-    } catch (error) {
-      console.error(error);
-      Alert.alert('Error', 'Something went wrong, please try again.');
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri);
     }
   };
 
@@ -55,38 +56,71 @@ export default function EditProfileScreen({ navigation }) {
     <View style={styles.container}>
       <Text style={styles.header}>Edit Profile</Text>
 
-      {/* Profile Picture */}
-      <TouchableOpacity onPress={() => Alert.alert('Change Picture', 'Image picker not implemented.')}>
-        <Image source={profilePic} style={styles.profilePic} />
-        <Text style={styles.changePicText}>Change Picture</Text>
+      {/* Image Picker and Preview */}
+      <TouchableOpacity onPress={pickImage}>
+        <Image
+          source={imageUri ? { uri: imageUri } : require('../assets/profilepic.png')}
+          style={{ width: 100, height: 100, borderRadius: 50, alignSelf: 'center' }}
+        />
+        <Text style={styles.changePicText}>Tap to choose picture</Text>
       </TouchableOpacity>
 
-      {/* Name Input */}
-      <Text style={styles.label}>Full Name</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your name"
-        value={name}
-        onChangeText={setName}
+      <Button title="Upload Picture" onPress={handleUploadProfilePicture} />
+
+      {/* Remove Profile Picture */}
+      <Button
+        title="Remove Profile Picture"
+        onPress={handleRemoveProfilePicture}
       />
 
-      {/* Password Input */}
-      <Text style={styles.label}>Password</Text>
+      {/* Update Profile Name */}
+      <Text style={styles.label}>First Name</Text>
       <TextInput
         style={styles.input}
-        placeholder="Enter new password"
+        placeholder="First Name"
+        value={firstName}
+        onChangeText={setFirstName}
+      />
+      <Text style={styles.label}>Last Name</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Last Name"
+        value={lastName}
+        onChangeText={setLastName}
+      />
+      <Button title="Update Name" onPress={handleUpdateProfileName} />
+
+      {/* Change Password */}
+      <Text style={styles.label}>Old Password</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Old Password"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
+      <Text style={styles.label}>New Password</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="New Password"
+        value={newPassword}
+        onChangeText={setNewPassword}
+        secureTextEntry
+      />
+      <Text style={styles.label}>Confirm Password</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Confirm Password"
+        value={confirmNewPassword}
+        onChangeText={setConfirmNewPassword}
+        secureTextEntry
+      />
+      <Button title="Change Password" onPress={handleChangePassword} />
 
-      {/* Save Button */}
-      <TouchableOpacity style={styles.button} onPress={handleSave}>
-        <Text style={styles.buttonText}>Save Changes</Text>
-      </TouchableOpacity>
-
-      {/* Cancel */}
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.cancelButton}>
+      <TouchableOpacity
+        onPress={() => navigation.goBack()}
+        style={styles.cancelButton}
+      >
         <Text style={styles.cancelText}>Cancel</Text>
       </TouchableOpacity>
     </View>
@@ -97,20 +131,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f7f5d9',
-    alignItems: 'center',
+    paddingHorizontal: 30,
     paddingTop: 40,
   },
   header: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
+    alignSelf: 'center',
   },
-  profilePic: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 1,
-    borderColor: '#333',
+  label: {
+    marginTop: 20,
+    fontSize: 16,
+    color: '#333',
+  },
+  input: {
+    backgroundColor: '#e0e0e0',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    marginTop: 5,
   },
   changePicText: {
     marginTop: 8,
@@ -119,36 +160,9 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
     textAlign: 'center',
   },
-  label: {
-    marginTop: 20,
-    alignSelf: 'flex-start',
-    marginLeft: 50,
-    fontSize: 16,
-    color: '#333',
-  },
-  input: {
-    width: '80%',
-    backgroundColor: '#e0e0e0',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    fontSize: 16,
-    marginTop: 5,
-  },
-  button: {
-    backgroundColor: '#4d6a72',
-    paddingVertical: 12,
-    paddingHorizontal: 40,
-    borderRadius: 20,
-    marginTop: 30,
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
   cancelButton: {
-    marginTop: 15,
+    marginTop: 30,
+    alignSelf: 'center',
   },
   cancelText: {
     color: '#555',

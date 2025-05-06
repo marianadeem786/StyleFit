@@ -1,39 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { useFonts } from 'expo-font';
-import { supabase } from '../lib/supabase';
+import config from '../config';
 
 export default function HomeScreen({ navigation }) {
   const [fontsLoaded] = useFonts({
     'Montserrat-Bold': require('../assets/Montserrat-Bold.ttf'),
   });
-
-  const [username, setUsername] = useState(null);
-
-  useEffect(() => {
-    fetchUserProfile();
-  }, []);
-
-  const fetchUserProfile = async () => {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      console.log('User fetch error', userError);
-      return;
-    }
-
-    const { data, error: profileError } = await supabase
-      .from('users')
-      .select('username')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError) {
-      console.log('Profile fetch error', profileError.message);
-    } else {
-      setUsername(data.username);
-    }
-  };
 
   if (!fontsLoaded) return null;
 
@@ -41,9 +14,7 @@ export default function HomeScreen({ navigation }) {
     <View style={styles.container}>
       <Image source={require('../assets/logo.png')} style={styles.logo} />
 
-      <Text style={styles.welcomeText}>
-        {username ? `Hello, ${username}!` : 'Hello, Fashion Explorer!'}
-      </Text>
+      <Text style={styles.welcomeText}>Hello, Fashion Explorer!</Text>
       <Text style={styles.subText}>Let's find your next look</Text>
 
       <View style={styles.iconRow}>
