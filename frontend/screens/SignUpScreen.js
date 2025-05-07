@@ -120,14 +120,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    paddingTop: 50,
-    paddingBottom: 50,
+    paddingTop: 60,
   },
   logo: {
-    width: 350,
-    height: 350,
+    width: 200,
+    height: 200,
     resizeMode: 'contain',
-    marginBottom: 10,
+    marginBottom: 50,
+    marginTop: -80,
   },
   headerBox: {
     backgroundColor: '#4d6a72',

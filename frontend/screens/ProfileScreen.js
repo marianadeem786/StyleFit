@@ -37,12 +37,44 @@ const ProfileScreen = ({
         )}
       </TouchableOpacity>
 
-      {profile?.profile_picture && (
-        <TouchableOpacity onPress={onRemoveProfilePicture}>
-          <Text style={styles.removeText}>Remove Picture</Text>
-        </TouchableOpacity>
-      )}
+        {/* Header Label */}
+        <View style={styles.headerBox}>
+          <Text style={styles.headerText}>PROFILE</Text>
+        </View>
 
+        {/* Full Name */}
+        <Text style={styles.label}>Full Name</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="John Doe"
+          placeholderTextColor="#888"
+          editable={false}
+        />
+
+        {/* Email */}
+        <Text style={styles.label}>Email</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="john@example.com"
+          placeholderTextColor="#888"
+          editable={false}
+        />
+
+        {/* Edit Profile Button */}
+        <TouchableOpacity
+  style={styles.button}
+  onPress={() => navigation.navigate('EditProfile')}
+>
+  <Text style={styles.buttonText}>EDIT PROFILE</Text>
+</TouchableOpacity>
+
+
+        {/* Wardrobe Button */}
+        <TouchableOpacity style={styles.wardrobeButton}
+          onPress={() => navigation.navigate('Wardrobe')}>
+          <Text style={styles.wardrobeButtonText}>WARDROBE</Text>
+        </TouchableOpacity>
+      
       <Text style={styles.username}>{profile?.username || "User"}</Text>
 
       <Text style={styles.sectionTitle}>Your Wardrobe</Text>

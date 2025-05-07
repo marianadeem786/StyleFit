@@ -15,9 +15,9 @@ import ProfileScreen from './screens/ProfileScreen';
 import EditProfileScreen from './screens/EditProfileScreen';
 // import LookFinderScreen from './screens/LookFinderScreen';
 // import TrendsScreen from './screens/TrendsScreen';
-// import GlobalStoreScreen from './screens/GlobalStoreScreen';
+import GlobalStoreScreen from './screens/GlobalStoreScreen';
 
-//import WardrobeScreen from './screens/WardrobeScreen';
+import WardrobeScreen from './screens/WardrobeScreen';
 
 
 
@@ -31,7 +31,7 @@ const Stack = createStackNavigator();
 export default function Navigation() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName={isUserLoggedIn ? "Home" : "GetStarted"} screenOptions={{ headerShown: true }}>
+      <Stack.Navigator initialRouteName={isUserLoggedIn ? "Home" : "GetStarted"} screenOptions={{ headerShown: false }}>
         <Stack.Screen name="GetStarted" component={GetStartedScreen} />
         <Stack.Screen name="LandingScreen" component={LandingScreen} />
         <Stack.Screen name="SignUp" component={SignUpScreen} />
@@ -44,10 +44,11 @@ export default function Navigation() {
         <Stack.Screen name="EditProfile" component={EditProfileScreen} />
         
         {/* <Stack.Screen name="LookFinder" component={LookFinderScreen} />
-        <Stack.Screen name="Trends" component={TrendsScreen} />
-        <Stack.Screen name="GlobalStore" component={GlobalStoreScreen} /> 
+        <Stack.Screen name="Trends" component={TrendsScreen} /> 
         <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-        <Stack.Screen name="Wardrobe" component={WardrobeScreen} />*/}
+        */}
+        <Stack.Screen name="GlobalStore" component={GlobalStoreScreen} />
+        <Stack.Screen name="Wardrobe" component={WardrobeScreen} />
 
 
     

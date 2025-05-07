@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import config from '../config';
-
 import {
   View,
   Text,
@@ -47,7 +45,7 @@ export default function EditProfileScreen({ route, navigation }) {
       quality: 1,
     });
 
-    if (!result.canceled) {
+    if (!result.canceled && result.assets && result.assets.length > 0) {
       setImageUri(result.assets[0].uri);
     }
   };
@@ -56,24 +54,19 @@ export default function EditProfileScreen({ route, navigation }) {
     <View style={styles.container}>
       <Text style={styles.header}>Edit Profile</Text>
 
-      {/* Image Picker and Preview */}
+      {/* Profile Picture Section */}
       <TouchableOpacity onPress={pickImage}>
         <Image
           source={imageUri ? { uri: imageUri } : require('../assets/profilepic.png')}
-          style={{ width: 100, height: 100, borderRadius: 50, alignSelf: 'center' }}
+          style={styles.profileImage}
         />
         <Text style={styles.changePicText}>Tap to choose picture</Text>
       </TouchableOpacity>
 
       <Button title="Upload Picture" onPress={handleUploadProfilePicture} />
+      <Button title="Remove Profile Picture" onPress={handleRemoveProfilePicture} />
 
-      {/* Remove Profile Picture */}
-      <Button
-        title="Remove Profile Picture"
-        onPress={handleRemoveProfilePicture}
-      />
-
-      {/* Update Profile Name */}
+      {/* Update Name Section */}
       <Text style={styles.label}>First Name</Text>
       <TextInput
         style={styles.input}
@@ -90,7 +83,7 @@ export default function EditProfileScreen({ route, navigation }) {
       />
       <Button title="Update Name" onPress={handleUpdateProfileName} />
 
-      {/* Change Password */}
+      {/* Change Password Section */}
       <Text style={styles.label}>Old Password</Text>
       <TextInput
         style={styles.input}
@@ -117,10 +110,7 @@ export default function EditProfileScreen({ route, navigation }) {
       />
       <Button title="Change Password" onPress={handleChangePassword} />
 
-      <TouchableOpacity
-        onPress={() => navigation.goBack()}
-        style={styles.cancelButton}
-      >
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.cancelButton}>
         <Text style={styles.cancelText}>Cancel</Text>
       </TouchableOpacity>
     </View>
@@ -140,6 +130,19 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     alignSelf: 'center',
   },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    alignSelf: 'center',
+  },
+  changePicText: {
+    marginTop: 8,
+    color: '#4d6a72',
+    fontSize: 14,
+    textDecorationLine: 'underline',
+    textAlign: 'center',
+  },
   label: {
     marginTop: 20,
     fontSize: 16,
@@ -152,13 +155,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     fontSize: 16,
     marginTop: 5,
-  },
-  changePicText: {
-    marginTop: 8,
-    color: '#4d6a72',
-    fontSize: 14,
-    textDecorationLine: 'underline',
-    textAlign: 'center',
   },
   cancelButton: {
     marginTop: 30,
