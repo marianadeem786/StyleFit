@@ -1,1 +1,46 @@
-* text=auto
+# 🐍 Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pkl
+*.pt
+*.bin
+*.log
+
+# 📁 Django/Migrations
+*.sqlite3
+*.db
+db.sqlite3
+*.pyc
+*.log
+
+# 🧠 Model files
+*.pth
+*.pt
+*.onnx
+
+# 🧪 Jupyter / Colab
+.ipynb_checkpoints/
+*.ipynb
+
+# 💻 OS & IDE files
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.bak
+*.tmp
+
+# 🚀 Node (if frontend exists)
+node_modules/
+build/
+dist/
+
+# 🧪 Supabase dump (if ever created)
+supabase/.temp/
+
+# 📷 Uploaded or temp files
+temp/
+media/
+uploads/
