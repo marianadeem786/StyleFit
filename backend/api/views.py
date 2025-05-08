@@ -599,5 +599,25 @@ def advanced_search_view(request):
     result = query.execute()
     return JsonResponse({'results': result.data}, status=200)
 
+@csrf_exempt
+def suggest_match_view(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+
+    try:
+        uploaded_file = request.FILES['image']
+        path = f"temp/{uploaded_file.name}"
+        with open(path, "wb+") as f:
+            for chunk in uploaded_file.chunks():
+                f.write(chunk)
+
+        from ai.match_items import suggest_matching_items
+        results = suggest_matching_items(path, opposite_type="bottom")
+
+        return JsonResponse({'results': results}, status=200)
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
 
 
