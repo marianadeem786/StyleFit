@@ -6,14 +6,15 @@ from supabase import create_client
 import requests
 from io import BytesIO
 import numpy as np
+from dotenv import load_dotenv
 import os
 
-# 🔐 Supabase credentials
+load_dotenv() 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# 🧠 Load CLIP model
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model, _, preprocess = open_clip.create_model_and_transforms(
     'ViT-B-32', pretrained='laion2b_s34b_b79k'
