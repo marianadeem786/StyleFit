@@ -188,7 +188,7 @@ export default function GlobalStoreScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FCFBEA',
+    backgroundColor: '#F5F5DC',
     padding: 16,
   },
   navbar: {
