@@ -8,7 +8,6 @@ import {
   StyleSheet,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
 export default function EditProfileScreen() {
@@ -23,8 +22,6 @@ export default function EditProfileScreen() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const goHome = () => navigation.navigate('Home');
-  const goBack = () => navigation.goBack();
 
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -48,7 +45,6 @@ export default function EditProfileScreen() {
       return;
     }
 
-    // 🟡 Placeholder: send updated firstName, lastName, imageUri, newPassword to backend
     alert('Changes saved (locally only for now).');
 
     navigation.goBack();
@@ -56,15 +52,16 @@ export default function EditProfileScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Navbar */}
-      <View style={styles.navbar}>
-        <TouchableOpacity onPress={goBack}>
-          <Ionicons name="arrow-back" size={28} color="#4d6a72" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={goHome}>
-          <Ionicons name="home" size={28} color="#4d6a72" />
-        </TouchableOpacity>
-      </View>
+          {/* NAVBAR */}
+          <View style={styles.navbar}>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Image source={require('../assets/backicon.png')} style={styles.navIcon} />
+            </TouchableOpacity>
+            <View style={{ flex: 1 }} />
+            <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+              <Image source={require('../assets/homeicon.png')} style={styles.navIcon} />
+            </TouchableOpacity>
+          </View>
 
       {/* Title */}
       <View style={styles.headerBox}>
@@ -72,13 +69,16 @@ export default function EditProfileScreen() {
       </View>
 
       {/* Profile Picture */}
-      <TouchableOpacity onPress={pickImage}>
-        <Image
-          source={imageUri ? { uri: imageUri } : require('../assets/pp.png')}
-          style={styles.profileImage}
-        />
-      </TouchableOpacity>
-      <Text style={styles.photoText}>Tap image to change</Text>
+<View style={{ alignItems: 'center', marginBottom: 10 }}>
+  <TouchableOpacity onPress={pickImage}>
+    <Image
+      source={imageUri ? { uri: imageUri } : require('../assets/pp.png')}
+      style={styles.profileImage}
+    />
+  </TouchableOpacity>
+  <Text style={styles.photoText}>Tap image to change</Text>
+</View>
+
 
       {/* First Name */}
       <Text style={styles.label}>First Name</Text>
@@ -131,32 +131,35 @@ export default function EditProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f7f5d9',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 50,
+    backgroundColor: '#F5F5DC',
+    padding: 16,
   },
   navbar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 20,
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+  },
+  navIcon: {
+    width: 28,
+    height: 28,
+    tintColor: '#4d6a72',
   },
   headerBox: {
     backgroundColor: '#4d6a72',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    alignSelf: 'flex-start',
     borderTopRightRadius: 20,
     borderBottomRightRadius: 20,
-    alignSelf: 'flex-start',
-    marginLeft: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    marginTop: 20,
     marginBottom: 20,
+    marginLeft: 20,
   },
   headerText: {
     color: 'white',
-    fontSize: 18,
+    fontSize: 20,
     fontFamily: 'Montserrat-Bold',
-    textTransform: 'uppercase',
   },
   profileImage: {
     width: 100,
@@ -167,8 +170,17 @@ const styles = StyleSheet.create({
   photoText: {
     fontSize: 12,
     color: '#4d6a72',
-    marginBottom: 20,
+    marginTop: 5,
   },
+  button: {
+    backgroundColor: '#4d6a72',
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 25,
+    marginTop: 20,
+    alignSelf: 'center',
+    alignItems: 'center',
+  },  
   label: {
     alignSelf: 'flex-start',
     marginLeft: 10,
@@ -184,13 +196,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     fontSize: 16,
     marginBottom: 10,
-  },
-  button: {
-    backgroundColor: '#4d6a72',
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 25,
-    marginTop: 20,
   },
   buttonText: {
     color: 'white',
