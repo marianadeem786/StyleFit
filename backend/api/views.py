@@ -628,5 +628,47 @@ def suggest_match_view(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+@csrf_exempt
+def find_similar_view(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+
+    try:
+        if 'image' not in request.FILES:
+            return JsonResponse({'error': 'No image file provided'}, status=400)
+
+        uploaded_file = request.FILES['image']
+        temp_dir = os.path.join(os.getcwd(), "temp")
+        os.makedirs(temp_dir, exist_ok=True)
+        path = os.path.join(temp_dir, uploaded_file.name)
+
+        with open(path, "wb+") as f:
+            for chunk in uploaded_file.chunks():
+                f.write(chunk)
+
+        from ai.similar_product import find_similar_products
+        results = find_similar_products(path)
+
+        return JsonResponse({'results': results}, status=200)
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    
+@csrf_exempt
+def trendy_outfits_view(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        gender = data.get("gender", "mens")  
+
+        from ai.trendy_outfits import get_trendy_outfits
+        outfits = get_trendy_outfits(gender)
+
+        return JsonResponse({'outfits': outfits}, status=200)
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 
