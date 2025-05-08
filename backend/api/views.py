@@ -143,7 +143,7 @@ def login_view(request):
     session_result = supabase.table("user_sessions").insert({
         "email": email,
         "created_at": now().isoformat()
-    }).select("session_id").execute()
+    }).execute()
 
     if not session_result.data:
         return JsonResponse({'error': 'Login succeeded, but session creation failed'}, status=500)
@@ -454,9 +454,10 @@ def show_profile_view(request):
     picture = user_data.get("picture")
 
     return JsonResponse({
-        'name': full_name,
-        'picture': picture
-    }, status=200)
+    'name': full_name,
+    'email': email,
+    'picture': picture
+}, status=200)
 
 
 @csrf_exempt

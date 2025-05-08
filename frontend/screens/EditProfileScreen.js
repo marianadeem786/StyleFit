@@ -10,18 +10,22 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import config from '../config';
 
 export default function EditProfileScreen() {
   const navigation = useNavigation();
   const route = useRoute();
-
   const { profile } = route.params || {};
 
   const [firstName, setFirstName] = useState(profile?.first_name || '');
   const [lastName, setLastName] = useState(profile?.last_name || '');
   const [imageUri, setImageUri] = useState(profile?.profile_picture || null);
+
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const goHome = () => navigation.navigate('Home');
   const goBack = () => navigation.goBack();
@@ -42,15 +46,97 @@ export default function EditProfileScreen() {
     }
   };
 
-  const handleSave = () => {
-    if (newPassword && newPassword !== confirmPassword) {
-      alert('Passwords do not match.');
+  const handleSave = async () => {
+    setLoading(true);
+    const sessionId = await AsyncStorage.getItem('session_id');
+    if (!sessionId) {
+      alert('Session ID not found.');
+      setLoading(false);
       return;
     }
 
-    // 🟡 Placeholder: send updated firstName, lastName, imageUri, newPassword to backend
-    alert('Changes saved (locally only for now).');
+    let nameUpdated = false;
+    let passwordUpdated = false;
 
+    try {
+      // --- Update name if changed ---
+      const nameChanged =
+        firstName !== profile?.first_name || lastName !== profile?.last_name;
+
+      if (nameChanged) {
+        const nameRes = await fetch(`${config.BACKEND_URL}/api/update_profile_name/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            session_id: sessionId,
+            first_name: firstName,
+            last_name: lastName,
+          }),
+        });
+        const nameData = await nameRes.json();
+        if (nameRes.ok) {
+          nameUpdated = true;
+        } else {
+          alert(nameData.error || 'Failed to update name.');
+        }
+      }
+
+      // --- Change password if fields are filled ---
+      if (currentPassword || newPassword || confirmPassword) {
+        if (!currentPassword || !newPassword || !confirmPassword) {
+          alert('Please fill all password fields to change password.');
+          setLoading(false);
+          return;
+        }
+
+        if (newPassword !== confirmPassword) {
+          alert('New passwords do not match.');
+          setLoading(false);
+          return;
+        }
+
+        const passRes = await fetch(`${config.BACKEND_URL}/api/change_password_view/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            session_id: sessionId,
+            old_password: currentPassword,
+            new_password: newPassword,
+            confirm_password: confirmPassword,
+          }),
+        });
+
+        const passData = await passRes.json();
+        console.log('Password change response:', passData);
+
+        if (passRes.status === 200 && passData.message === 'Password changed successfully') {
+          passwordUpdated = true;
+        } else {
+          alert(passData.error || 'Failed to change password.');
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Final combined feedback
+      if (nameUpdated && passwordUpdated) {
+        alert('Name and password updated successfully.');
+      } else if (nameUpdated) {
+        alert('Name updated successfully.');
+      } else if (passwordUpdated) {
+        alert('Password updated successfully.');
+      }
+
+    } catch (error) {
+      console.error('Update failed:', error);
+      alert('An error occurred. Please try again later.');
+    }
+
+    setLoading(false);
     navigation.goBack();
   };
 
@@ -100,6 +186,16 @@ export default function EditProfileScreen() {
         placeholderTextColor="#888"
       />
 
+      {/* Current Password */}
+      <Text style={styles.label}>Current Password</Text>
+      <TextInput
+        style={styles.input}
+        value={currentPassword}
+        onChangeText={setCurrentPassword}
+        placeholder="Enter current password"
+        secureTextEntry
+      />
+
       {/* New Password */}
       <Text style={styles.label}>New Password</Text>
       <TextInput
@@ -111,7 +207,7 @@ export default function EditProfileScreen() {
       />
 
       {/* Confirm Password */}
-      <Text style={styles.label}>Confirm Password</Text>
+      <Text style={styles.label}>Confirm New Password</Text>
       <TextInput
         style={styles.input}
         value={confirmPassword}
@@ -121,8 +217,10 @@ export default function EditProfileScreen() {
       />
 
       {/* Save Button */}
-      <TouchableOpacity style={styles.button} onPress={handleSave}>
-        <Text style={styles.buttonText}>SAVE CHANGES</Text>
+      <TouchableOpacity style={styles.button} onPress={handleSave} disabled={loading}>
+        <Text style={styles.buttonText}>
+          {loading ? 'Saving...' : 'SAVE CHANGES'}
+        </Text>
       </TouchableOpacity>
     </View>
   );

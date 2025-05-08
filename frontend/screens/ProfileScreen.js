@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,9 +10,47 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // AsyncStorage to get session_id
+import config from '../config';
 
-export default function ProfileScreen({ profile }) {
+export default function ProfileScreen() {
   const navigation = useNavigation();
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const sessionId = await AsyncStorage.getItem('session_id');
+      if (!sessionId) {
+        Alert.alert('Error', 'No session found.');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${config.BACKEND_URL}/api/show_profile/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ session_id: sessionId }),
+        });
+
+        const data = await res.json();
+        setLoading(false);
+
+        if (res.ok) {
+          setProfile(data); // Set the profile data from the response
+        } else {
+          Alert.alert('Error', data.error || 'Failed to fetch profile');
+        }
+      } catch (error) {
+        setLoading(false);
+        Alert.alert('Error', 'Failed to load profile. Please try again later.');
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   const goHome = () => {
     navigation.navigate('Home');
@@ -34,7 +72,7 @@ export default function ProfileScreen({ profile }) {
         {
           text: 'Confirm',
           onPress: () => {
-            // 🔒 Placeholder for backend logout and navigation
+            AsyncStorage.removeItem('session_id'); // Clear session data
             navigation.reset({
               index: 0,
               routes: [{ name: 'Login' }],
@@ -45,6 +83,10 @@ export default function ProfileScreen({ profile }) {
       { cancelable: true }
     );
   };
+
+  if (loading) {
+    return <Text>Loading...</Text>; // You can add a loading spinner here
+  }
 
   return (
     <View style={styles.container}>
@@ -67,8 +109,8 @@ export default function ProfileScreen({ profile }) {
       <TouchableOpacity>
         <Image
           source={
-            profile?.profile_picture
-              ? { uri: profile.profile_picture }
+            profile?.picture
+              ? { uri: profile.picture }
               : require('../assets/pp.png')
           }
           style={styles.profileImage}
@@ -76,24 +118,15 @@ export default function ProfileScreen({ profile }) {
       </TouchableOpacity>
 
       {/* First Name */}
-      <Text style={styles.label}>First Name</Text>
+      <Text style={styles.label}>Full Name</Text>
       <TextInput
         style={styles.input}
         editable={false}
-        value={profile?.first_name || ''}
-        placeholder="First Name"
+        value={profile?.name || ''}
+        placeholder="Full Name"
         placeholderTextColor="#888"
       />
 
-      {/* Last Name */}
-      <Text style={styles.label}>Last Name</Text>
-      <TextInput
-        style={styles.input}
-        editable={false}
-        value={profile?.last_name || ''}
-        placeholder="Last Name"
-        placeholderTextColor="#888"
-      />
 
       {/* Email */}
       <Text style={styles.label}>Email</Text>

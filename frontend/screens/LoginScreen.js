@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { useFonts } from 'expo-font';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
 import config from '../config';
 
 export default function LoginScreen({ navigation }) {
@@ -28,7 +29,16 @@ export default function LoginScreen({ navigation }) {
 
       const data = await res.json();
       if (res.ok) {
+        // Successfully logged in
         Alert.alert('Success', 'Login successful!');
+        
+        // Assume your backend sends back a session_id or token in the response
+        const sessionId = data.session_id;
+        
+        // Store the session ID locally (you could also store other info if needed)
+        await AsyncStorage.setItem('session_id', String(sessionId));
+
+        // Navigate to the Home screen
         navigation.navigate('Home');
       } else {
         Alert.alert('Error', data.error || 'Login failed.');
@@ -37,6 +47,7 @@ export default function LoginScreen({ navigation }) {
       Alert.alert('Error', 'Network error.');
     }
   };
+
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
