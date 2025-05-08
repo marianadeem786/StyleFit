@@ -24,5 +24,5 @@ urlpatterns = [
     path("search_by_name_view/", search_by_name_view, name='search_by_name_view'),
     path("search_by_store_view/", search_by_store_view, name='search_by_store_view'),
     path("filter_by_category_view/", filter_by_category_view, name='filter_by_category_view'),
-    path("advanced_search_view/", advanced_search_view, name='advanced_search_view')
+    path("advanced_search_view/", advanced_search_view, name='advanced_search_view'),
 ]
