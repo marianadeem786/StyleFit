@@ -3,115 +3,126 @@ import {
   View,
   Text,
   TextInput,
+  Image,
   TouchableOpacity,
   StyleSheet,
-  Image,
-  Alert,
-  Button,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
-export default function EditProfileScreen({ route, navigation }) {
-  const {
-    email,
-    imageUri,
-    setImageUri,
-    handleUploadProfilePicture,
-    handleRemoveProfilePicture,
-    firstName,
-    lastName,
-    setFirstName,
-    setLastName,
-    handleUpdateProfileName,
-    password,
-    newPassword,
-    confirmNewPassword,
-    setPassword,
-    setNewPassword,
-    setConfirmNewPassword,
-    handleChangePassword,
-  } = route.params;
+export default function EditProfileScreen() {
+  const navigation = useNavigation();
+  const route = useRoute();
+
+  const { profile } = route.params || {};
+
+  const [firstName, setFirstName] = useState(profile?.first_name || '');
+  const [lastName, setLastName] = useState(profile?.last_name || '');
+  const [imageUri, setImageUri] = useState(profile?.profile_picture || null);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const goHome = () => navigation.navigate('Home');
+  const goBack = () => navigation.goBack();
 
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (!permissionResult.granted) {
-      Alert.alert("Permission Required", "Permission to access media library is required!");
-      return;
-    }
+    if (!permissionResult.granted) return;
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
     });
 
-    if (!result.canceled && result.assets && result.assets.length > 0) {
+    if (!result.canceled && result.assets.length > 0) {
       setImageUri(result.assets[0].uri);
     }
   };
 
+  const handleSave = () => {
+    if (newPassword && newPassword !== confirmPassword) {
+      alert('Passwords do not match.');
+      return;
+    }
+
+    // 🟡 Placeholder: send updated firstName, lastName, imageUri, newPassword to backend
+    alert('Changes saved (locally only for now).');
+
+    navigation.goBack();
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Edit Profile</Text>
+      {/* Navbar */}
+      <View style={styles.navbar}>
+        <TouchableOpacity onPress={goBack}>
+          <Ionicons name="arrow-back" size={28} color="#4d6a72" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={goHome}>
+          <Ionicons name="home" size={28} color="#4d6a72" />
+        </TouchableOpacity>
+      </View>
 
-      {/* Profile Picture Section */}
+      {/* Title */}
+      <View style={styles.headerBox}>
+        <Text style={styles.headerText}>EDIT PROFILE</Text>
+      </View>
+
+      {/* Profile Picture */}
       <TouchableOpacity onPress={pickImage}>
         <Image
-          source={imageUri ? { uri: imageUri } : require('../assets/profilepic.png')}
+          source={imageUri ? { uri: imageUri } : require('../assets/pp.png')}
           style={styles.profileImage}
         />
-        <Text style={styles.changePicText}>Tap to choose picture</Text>
       </TouchableOpacity>
+      <Text style={styles.photoText}>Tap image to change</Text>
 
-      <Button title="Upload Picture" onPress={handleUploadProfilePicture} />
-      <Button title="Remove Profile Picture" onPress={handleRemoveProfilePicture} />
-
-      {/* Update Name Section */}
+      {/* First Name */}
       <Text style={styles.label}>First Name</Text>
       <TextInput
         style={styles.input}
-        placeholder="First Name"
         value={firstName}
         onChangeText={setFirstName}
+        placeholder="First Name"
+        placeholderTextColor="#888"
       />
+
+      {/* Last Name */}
       <Text style={styles.label}>Last Name</Text>
       <TextInput
         style={styles.input}
-        placeholder="Last Name"
         value={lastName}
         onChangeText={setLastName}
+        placeholder="Last Name"
+        placeholderTextColor="#888"
       />
-      <Button title="Update Name" onPress={handleUpdateProfileName} />
 
-      {/* Change Password Section */}
-      <Text style={styles.label}>Old Password</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Old Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
+      {/* New Password */}
       <Text style={styles.label}>New Password</Text>
       <TextInput
         style={styles.input}
-        placeholder="New Password"
         value={newPassword}
         onChangeText={setNewPassword}
+        placeholder="Enter new password"
         secureTextEntry
       />
+
+      {/* Confirm Password */}
       <Text style={styles.label}>Confirm Password</Text>
       <TextInput
         style={styles.input}
-        placeholder="Confirm Password"
-        value={confirmNewPassword}
-        onChangeText={setConfirmNewPassword}
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
+        placeholder="Confirm new password"
         secureTextEntry
       />
-      <Button title="Change Password" onPress={handleChangePassword} />
 
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.cancelButton}>
-        <Text style={styles.cancelText}>Cancel</Text>
+      {/* Save Button */}
+      <TouchableOpacity style={styles.button} onPress={handleSave}>
+        <Text style={styles.buttonText}>SAVE CHANGES</Text>
       </TouchableOpacity>
     </View>
   );
@@ -121,48 +132,69 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f7f5d9',
-    paddingHorizontal: 30,
-    paddingTop: 40,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 50,
   },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  navbar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
     marginBottom: 20,
-    alignSelf: 'center',
+  },
+  headerBox: {
+    backgroundColor: '#4d6a72',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderTopRightRadius: 20,
+    borderBottomRightRadius: 20,
+    alignSelf: 'flex-start',
+    marginLeft: 10,
+    marginBottom: 20,
+  },
+  headerText: {
+    color: 'white',
+    fontSize: 18,
+    fontFamily: 'Montserrat-Bold',
+    textTransform: 'uppercase',
   },
   profileImage: {
     width: 100,
     height: 100,
-    borderRadius: 50,
-    alignSelf: 'center',
+    borderRadius: 60,
+    marginBottom: 5,
   },
-  changePicText: {
-    marginTop: 8,
+  photoText: {
+    fontSize: 12,
     color: '#4d6a72',
-    fontSize: 14,
-    textDecorationLine: 'underline',
-    textAlign: 'center',
+    marginBottom: 20,
   },
   label: {
-    marginTop: 20,
+    alignSelf: 'flex-start',
+    marginLeft: 10,
     fontSize: 16,
     color: '#333',
+    marginTop: 10,
   },
   input: {
-    backgroundColor: '#e0e0e0',
-    borderRadius: 8,
-    paddingVertical: 10,
+    width: '100%',
+    backgroundColor: '#e8e8e8',
+    paddingVertical: 12,
     paddingHorizontal: 15,
+    borderRadius: 10,
     fontSize: 16,
-    marginTop: 5,
+    marginBottom: 10,
   },
-  cancelButton: {
-    marginTop: 30,
-    alignSelf: 'center',
+  button: {
+    backgroundColor: '#4d6a72',
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 25,
+    marginTop: 20,
   },
-  cancelText: {
-    color: '#555',
+  buttonText: {
+    color: 'white',
     fontSize: 16,
-    textDecorationLine: 'underline',
+    fontFamily: 'Montserrat-Bold',
   },
 });

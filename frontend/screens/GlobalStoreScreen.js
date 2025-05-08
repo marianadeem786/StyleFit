@@ -37,7 +37,6 @@ const FilterOption = ({ label, options = [], selected, setSelected, showIcon = f
     }
   };
 
-
   return (
     <View style={styles.filterGroup}>
       <TouchableOpacity style={styles.filterLabelRow} onPress={() => expandable && setExpanded(!expanded)}>
@@ -165,17 +164,15 @@ export default function GlobalStoreScreen() {
                 expandable
               />
 
-<FilterOption
-  label="Order"
-  options={["Price: Low to High", "Price: High to Low"]}
-  selected={selectedFilters.order}
-  setSelected={(val) => updateFilter("order", val)}
-  showIcon
-  expandable
-  singleSelect={true}
-/>
-
-
+              <FilterOption
+                label="Order"
+                options={["Price: Low to High", "Price: High to Low"]}
+                selected={selectedFilters.order}
+                setSelected={(val) => updateFilter("order", val)}
+                showIcon
+                expandable
+                singleSelect={true}
+              />
             </ScrollView>
 
             <Pressable onPress={() => setFilterVisible(false)} style={styles.applyButton}>
@@ -191,8 +188,8 @@ export default function GlobalStoreScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
     backgroundColor: '#FCFBEA',
+    padding: 16,
   },
   navbar: {
     flexDirection: 'row',
@@ -206,7 +203,7 @@ const styles = StyleSheet.create({
     tintColor: '#4d6a72',
   },
   titleContainer: {
-    backgroundColor: '#50808E',
+    backgroundColor: '#4d6a72',
     alignSelf: 'flex-start',
     borderTopRightRadius: 20,
     borderBottomRightRadius: 20,
@@ -218,7 +215,7 @@ const styles = StyleSheet.create({
   title: {
     color: 'white',
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: 'Montserrat-Bold',  // Consistent with other screens
   },
   filterRow: {
     flexDirection: 'row',
@@ -239,7 +236,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     marginLeft: 4,
-    color: '#50808E',
+    color: '#4d6a72',
   },
   selectedFiltersText: {
     marginTop: 10,
@@ -276,7 +273,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: 'Montserrat-Bold',  // Consistent with other screens
     marginBottom: 10,
     textAlign: 'center',
   },
@@ -290,8 +287,9 @@ const styles = StyleSheet.create({
   },
   filterLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Montserrat-SemiBold',  // Consistent with other screens
     marginRight: 8,
+    color: '#4d6a72',  // Consistent with other screens
   },
   arrowIcon: {
     width: 14,
@@ -310,20 +308,21 @@ const styles = StyleSheet.create({
   },
   filterButtonText: {
     color: '#333',
+    fontFamily: 'Montserrat-Regular',  // Consistent with other screens
   },
   filterButtonTextSelected: {
     color: 'white',
   },
   applyButton: {
-    backgroundColor: '#50808E',
+    backgroundColor: '#4d6a72',
     padding: 12,
     borderRadius: 10,
     alignItems: 'center',
     marginTop: 10,
   },
   applyButtonText: {
-    color: '#fff',
+    color: 'white',
+    fontFamily: 'Montserrat-Bold',
     fontSize: 16,
-    fontWeight: 'bold',
-  },
-});
+    },
+    });

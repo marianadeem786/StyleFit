@@ -13,15 +13,11 @@ import UpdatePasswordScreen from './screens/UpdatePasswordScreen';
 import HomeScreen from './screens/HomeScreen'; 
 import ProfileScreen from './screens/ProfileScreen';
 import EditProfileScreen from './screens/EditProfileScreen';
-// import LookFinderScreen from './screens/LookFinderScreen';
+import LookFinderScreen from './screens/LookFinderScreen';
 // import TrendsScreen from './screens/TrendsScreen';
+// import SuggestMatching from './screens/SuggestMatchingScreen';
 import GlobalStoreScreen from './screens/GlobalStoreScreen';
-
 import WardrobeScreen from './screens/WardrobeScreen';
-
-
-
-
 
 // Example of checking login status (you can replace this with your own authentication check)
 const isUserLoggedIn = false;  // Set this dynamically based on actual login status
@@ -42,18 +38,13 @@ export default function Navigation() {
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-        
-        {/* <Stack.Screen name="LookFinder" component={LookFinderScreen} />
+        <Stack.Screen name="LookFinder" component={LookFinderScreen} />
+        {/* 
         <Stack.Screen name="Trends" component={TrendsScreen} /> 
-        <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+        <Stack.Screen name="SuggestMatching" component={SuggestMatchingScreen} />
         */}
         <Stack.Screen name="GlobalStore" component={GlobalStoreScreen} />
         <Stack.Screen name="Wardrobe" component={WardrobeScreen} />
-
-
-    
-
-        
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -34,7 +34,9 @@ export default function CreateAccountScreen({ navigation }) {
         }),
       });
 
-      const data = await res.json();
+      const data = await res.text();
+console.log('Raw response:', data);
+
       if (res.ok) {
         Alert.alert('Success', data.message || 'Account created successfully!');
         navigation.navigate('EnterOTP', { email, purpose: 'signup' }); // Navigate to login screen after successful sign-up
@@ -42,6 +44,7 @@ export default function CreateAccountScreen({ navigation }) {
         Alert.alert('Error', data.error || 'Signup failed.');
       }
     } catch (error) {
+      console.error('Signup error:', error); 
       Alert.alert('Error', 'Network error.');
     }
   };
@@ -137,17 +140,18 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 20,
     alignSelf: 'flex-start',
     marginLeft: 20,
-    marginBottom: 20,
+    marginBottom: 30,
+    marginTop: -30,
   },
   headerText: {
     color: 'white',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'Montserrat-Bold',
     textTransform: 'uppercase',
   },
   label: {
     alignSelf: 'flex-start',
-    marginLeft: 40,
+    marginLeft: 50,
     fontSize: 16,
     color: '#333',
     marginTop: 10,
@@ -164,15 +168,14 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: '#4d6a72',
-    paddingHorizontal: 40,
-    paddingVertical: 12,
-    borderRadius: 20,
-    marginTop: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 25,
+    marginTop: 10,
   },
   buttonText: {
     color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-    letterSpacing: 1,
+    fontSize: 18,
+    fontFamily: 'Montserrat-Bold',
   },
 });
