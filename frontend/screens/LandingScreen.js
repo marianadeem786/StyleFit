@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import * as Font from 'expo-font';
-import config from '../config';
+import config from '../config'; 
 
 
 export default function GetStartedScreen({ navigation }) {
@@ -58,29 +58,40 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#F5F5DC',
+    backgroundColor: '#f7f5d9',
     alignItems: 'center',
     justifyContent: 'center',
   },
   logo: {
-    width: 400,
-    height: 400,
-    marginBottom: 40,
+    width: 350,
+    height: 350,
+    marginBottom: -100,
+    marginTop: -30,
+  },
+  slogan: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 30,
+    fontFamily: 'sans-serif-medium',
   },
   button: {
-    backgroundColor: '#50808E',
-    paddingVertical: 15,
-    paddingHorizontal: 25,
+    backgroundColor: '#4d6a72',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 25,
-    marginTop: 20,
-  },
-  loginButton: {
-    marginTop: 10, // Slight margin difference for distinction
-    backgroundColor: '#607B7F', // Different color for login button
+    width: '40%',
+    alignItems: 'center',
+    marginTop: 60,
+    marginBottom: -40,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 20,
+    color: '#ffffff',
+    fontSize: 18,
     fontFamily: 'Montserrat-Bold',
+  },
+  footerText: {
+    color: '#333',
+    fontSize: 16,
+    marginTop: 50,
   },
 });

@@ -52,6 +52,17 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.iconLabel}>Global Store</Text>
         </TouchableOpacity>
       </View>
+
+      {/* New Icon Row for Suggest Matching */}
+      <View style={styles.iconRow}>
+        <TouchableOpacity
+          style={styles.iconWrapper}
+          onPress={() => navigation.navigate('SuggestMatching')}
+        >
+          <Image source={require('../assets/matching.png')} style={styles.icon} />
+          <Text style={styles.iconLabel}>Suggest Matching</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }

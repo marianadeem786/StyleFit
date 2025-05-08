@@ -54,16 +54,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logo: {
-    width: 300, // Reduced size for faster loading
-    height: 300, // Reduced size for faster loading
-    marginBottom: 40,
+    width: 350,
+    height: 350,
+    marginBottom: 50,
+    marginTop: 85,
   },
   button: {
-    backgroundColor: '#50808E',
-    paddingVertical: 15,
-    paddingHorizontal: 25,
+    backgroundColor: '#4d6a72',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 25,
-    marginTop: -40, // Adjusted margin for better layout
+    marginTop: -100,
+    marginBottom: 150,
   },
   buttonText: {
     color: '#fff',

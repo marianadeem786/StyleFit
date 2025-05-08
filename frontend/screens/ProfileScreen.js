@@ -1,134 +1,194 @@
-import React from "react";
-import config from '../config';
+import React from 'react';
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  TextInput,
+  Alert,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
-import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, Alert } from "react-native";
+export default function ProfileScreen({ profile }) {
+  const navigation = useNavigation();
 
-const ProfileScreen = ({
-  profile,
-  wardrobe,
-  loading,
-  onUploadProfilePicture,
-  onRemoveProfilePicture,
-  onRemoveWardrobeItem,
-}) => {
-  const renderWardrobeItem = ({ item }) => (
-    <View style={styles.wardrobeItem}>
-      <Image source={{ uri: item.image_url }} style={styles.wardrobeImage} />
-      <TouchableOpacity
-        style={styles.deleteButton}
-        onPress={() => onRemoveWardrobeItem(item.id)}
-      >
-        <Text style={styles.deleteText}>✕</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  const goHome = () => {
+    navigation.navigate('Home');
+  };
 
-  if (loading) return <Text style={styles.loading}>Loading...</Text>;
+  const goBack = () => {
+    navigation.goBack();
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to log out?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Confirm',
+          onPress: () => {
+            // 🔒 Placeholder for backend logout and navigation
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            });
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={onUploadProfilePicture}>
-        {profile?.profile_picture ? (
-          <Image source={{ uri: profile.profile_picture }} style={styles.profileImage} />
-        ) : (
-          <View style={styles.profilePlaceholder}>
-            <Text style={styles.placeholderText}>Upload Photo</Text>
-          </View>
-        )}
+      {/* Top Navbar */}
+      <View style={styles.navbar}>
+        <TouchableOpacity onPress={goBack}>
+          <Ionicons name="arrow-back" size={28} color="#4d6a72" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={goHome}>
+          <Ionicons name="home" size={28} color="#4d6a72" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Header Title */}
+      <View style={styles.headerBox}>
+        <Text style={styles.headerText}>PROFILE</Text>
+      </View>
+
+      {/* Profile Image */}
+      <TouchableOpacity>
+        <Image
+          source={
+            profile?.profile_picture
+              ? { uri: profile.profile_picture }
+              : require('../assets/pp.png')
+          }
+          style={styles.profileImage}
+        />
       </TouchableOpacity>
 
-      {profile?.profile_picture && (
-        <TouchableOpacity onPress={onRemoveProfilePicture}>
-          <Text style={styles.removeText}>Remove Picture</Text>
-        </TouchableOpacity>
-      )}
-
-      <Text style={styles.username}>{profile?.username || "User"}</Text>
-
-      <Text style={styles.sectionTitle}>Your Wardrobe</Text>
-      <FlatList
-        data={wardrobe}
-        renderItem={renderWardrobeItem}
-        keyExtractor={(item) => item.id.toString()}
-        numColumns={2}
-        contentContainerStyle={styles.wardrobeList}
+      {/* First Name */}
+      <Text style={styles.label}>First Name</Text>
+      <TextInput
+        style={styles.input}
+        editable={false}
+        value={profile?.first_name || ''}
+        placeholder="First Name"
+        placeholderTextColor="#888"
       />
+
+      {/* Last Name */}
+      <Text style={styles.label}>Last Name</Text>
+      <TextInput
+        style={styles.input}
+        editable={false}
+        value={profile?.last_name || ''}
+        placeholder="Last Name"
+        placeholderTextColor="#888"
+      />
+
+      {/* Email */}
+      <Text style={styles.label}>Email</Text>
+      <TextInput
+        style={styles.input}
+        editable={false}
+        value={profile?.email || ''}
+        placeholder="Email"
+        placeholderTextColor="#888"
+      />
+
+      {/* Buttons */}
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('EditProfile', { profile })}
+      >
+        <Text style={styles.buttonText}>EDIT PROFILE</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('Wardrobe')}
+      >
+        <Text style={styles.buttonText}>WARDROBE</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.button} onPress={handleLogout}>
+        <Text style={styles.buttonText}>LOGOUT</Text>
+      </TouchableOpacity>
     </View>
   );
-};
-
-export default ProfileScreen;
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: "#fff",
-    alignItems: "center",
+    backgroundColor: '#f7f5d9',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 50,
   },
-  profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    marginBottom: 10,
-  },
-  profilePlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: "#eee",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  placeholderText: {
-    color: "#888",
-  },
-  removeText: {
-    color: "#f00",
-    marginBottom: 10,
-  },
-  username: {
-    fontSize: 20,
-    fontWeight: "bold",
+  navbar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
     marginBottom: 20,
   },
-  sectionTitle: {
+  headerBox: {
+    backgroundColor: '#4d6a72',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderTopRightRadius: 20,
+    borderBottomRightRadius: 20,
+    alignSelf: 'flex-start',
+    marginLeft: 10,
+    marginBottom: 20,
+  },
+  headerText: {
+    color: 'white',
     fontSize: 18,
-    fontWeight: "600",
-    marginTop: 20,
-    marginBottom: 10,
-    alignSelf: "flex-start",
+    fontFamily: 'Montserrat-Bold',
+    textTransform: 'uppercase',
   },
-  wardrobeList: {
-    width: "100%",
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 60,
+    marginBottom: 20,
   },
-  wardrobeItem: {
-    width: "48%",
-    margin: "1%",
-    aspectRatio: 1,
-    position: "relative",
+  label: {
+    alignSelf: 'flex-start',
+    marginLeft: 10,
+    fontSize: 16,
+    color: '#333',
+    marginTop: 10,
   },
-  wardrobeImage: {
-    width: "100%",
-    height: "100%",
+  input: {
+    width: '100%',
+    backgroundColor: '#e8e8e8',
+    paddingVertical: 12,
+    paddingHorizontal: 15,
     borderRadius: 10,
+    fontSize: 16,
+    marginBottom: 10,
   },
-  deleteButton: {
-    position: "absolute",
-    top: 5,
-    right: 5,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    borderRadius: 12,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+  button: {
+    backgroundColor: '#4d6a72',
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 25,
+    marginTop: 15,
   },
-  deleteText: {
-    color: "white",
-    fontWeight: "bold",
-  },
-  loading: {
-    marginTop: 50,
-    fontSize: 18,
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontFamily: 'Montserrat-Bold',
   },
 });

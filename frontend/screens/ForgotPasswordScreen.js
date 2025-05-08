@@ -1,18 +1,14 @@
 import React, { useState } from 'react';
 import config from '../config';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
-  ScrollView,
-  Alert,
-} from 'react-native';
-
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, Alert } from 'react-native';
+import { useFonts } from 'expo-font';
 
 export default function ForgotPasswordScreen({ navigation }) {
+  const [fontsLoaded] = useFonts({
+    'Montserrat-Bold': require('../assets/Montserrat-Bold.ttf'),
+  });
+
+  if (!fontsLoaded) return null;
   const [email, setEmail] = useState('');
 
   const handleForgotPassword = async () => {
@@ -52,14 +48,13 @@ export default function ForgotPasswordScreen({ navigation }) {
 
         {/* Instruction */}
         <Text style={styles.instruction}>
-          Please enter your email address and we will send you an OTP to change your password.
+          Please enter your email address and receive an OTP to change your password
         </Text>
 
         {/* Email Input */}
         <Text style={styles.label}>Email</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter your email"
           placeholderTextColor="#888"
           keyboardType="email-address"
           value={email}
@@ -85,13 +80,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    paddingTop: 50,
-    paddingBottom: 50,
+    paddingTop: 60,
   },
   logo: {
-    width: 350,
-    height: 350,
-    marginBottom: 10,
+    width: 200,
+    height: 200,
+    resizeMode: 'contain',
+    marginBottom: 50,
+    marginTop: -80,
   },
   headerBox: {
     backgroundColor: '#4d6a72',
@@ -101,49 +97,50 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 20,
     alignSelf: 'flex-start',
     marginLeft: 20,
-    marginBottom: 20,
+    marginBottom: 30,
+    marginTop: -30,
   },
   headerText: {
     color: 'white',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'Montserrat-Bold',
     textTransform: 'uppercase',
   },
-  instruction: {
-    fontSize: 14,
+  label: {
+    alignSelf: 'flex-start',
+    marginLeft: 50,
+    fontSize: 16,
     color: '#333',
-    marginBottom: 20,
+    marginTop: 10,
+    marginBottom: 5,
+  },
+  instruction: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 40,
     alignSelf: 'flex-start',
     marginLeft: 20,
     marginRight: 20,
   },
-  label: {
-    alignSelf: 'flex-start',
-    fontSize: 14,
-    color: '#333',
-    marginTop: 10,
-    marginBottom: 5,
-    marginLeft: 20,
-  },
   input: {
-    width: '85%',
-    backgroundColor: '#ddd',
-    borderRadius: 8,
-    padding: 10,
+    width: '80%',
+    backgroundColor: '#e8e8e8',
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    borderRadius: 10,
     fontSize: 16,
-    marginBottom: 20,
+    marginBottom: 15,
   },
   button: {
     backgroundColor: '#4d6a72',
-    paddingVertical: 12,
-    paddingHorizontal: 50,
-    borderRadius: 30,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 25,
     marginTop: 10,
   },
   buttonText: {
-    color: '#ffffff',
+    color: 'white',
     fontSize: 18,
-    fontWeight: 'bold',
-    letterSpacing: 1,
+    fontFamily: 'Montserrat-Bold',
   },
 });

@@ -1,8 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { useFonts } from 'expo-font';
 import config from '../config';
 
 export default function LoginScreen({ navigation }) {
+  const [fontsLoaded] = useFonts({
+    'Montserrat-Bold': require('../assets/Montserrat-Bold.ttf'),
+  });
+
+  if (!fontsLoaded) return null;
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -30,7 +37,6 @@ export default function LoginScreen({ navigation }) {
       Alert.alert('Error', 'Network error.');
     }
   };
-
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
@@ -80,14 +86,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    paddingTop: 50,
-    paddingBottom: 50,
+    paddingTop: 60,
   },
   logo: {
-    width: 350,
-    height: 350,
+    width: 200,
+    height: 200,
     resizeMode: 'contain',
-    marginBottom: 10,
+    marginBottom: 50,
+    marginTop: -80,
   },
   headerBox: {
     backgroundColor: '#4d6a72',
@@ -97,17 +103,18 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 20,
     alignSelf: 'flex-start',
     marginLeft: 20,
-    marginBottom: 20,
+    marginBottom: 30,
+    marginTop: -30,
   },
   headerText: {
     color: 'white',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'Montserrat-Bold',
     textTransform: 'uppercase',
   },
   label: {
     alignSelf: 'flex-start',
-    marginLeft: 40,
+    marginLeft: 50,
     fontSize: 16,
     color: '#333',
     marginTop: 10,
@@ -132,15 +139,14 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: '#4d6a72',
-    paddingHorizontal: 40,
-    paddingVertical: 12,
-    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 25,
     marginTop: 10,
   },
   buttonText: {
     color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-    letterSpacing: 1,
+    fontSize: 18,
+    fontFamily: 'Montserrat-Bold',
   },
 });
