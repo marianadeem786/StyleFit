@@ -672,3 +672,48 @@ def trendy_outfits_view(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+@csrf_exempt
+def wardrobe_outfits_view(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        email = data.get("email")
+        if not email:
+            return JsonResponse({'error': 'Email is required'}, status=400)
+
+        from ai.wardrobe_outfits import generate_outfits_from_wardrobe
+        result = generate_outfits_from_wardrobe(email)
+
+        if "error" in result:
+            return JsonResponse({"error": result["error"]}, status=400)
+
+        return JsonResponse(result, status=200)
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def recommend_wardrobe_view(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        email = data.get("email")
+        if not email:
+            return JsonResponse({'error': 'Email is required'}, status=400)
+
+        from ai.recommend_fill_wardrobe import recommend_for_wardrobe
+        result = recommend_for_wardrobe(email)
+
+        if "error" in result:
+            return JsonResponse({'error': result["error"]}, status=400)
+
+        return JsonResponse(result, status=200)
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+

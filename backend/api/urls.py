@@ -4,7 +4,7 @@ from .views import (
     upload_profile_picture_view, remove_profile_picture_view, view_wardrobe_items_view,
     remove_wardrobe_item_view, upload_wardrobe_item_view, show_profile_view, update_profile_name_view,
     change_password_view, search_by_name_view, search_by_store_view, filter_by_category_view,
-    advanced_search_view, suggest_match_view, find_similar_view, trendy_outfits_view
+    advanced_search_view, suggest_match_view, find_similar_view, trendy_outfits_view,wardrobe_outfits_view, recommend_wardrobe_view
 )
 
 urlpatterns = [
@@ -27,5 +27,7 @@ urlpatterns = [
     path("advanced_search_view/", advanced_search_view, name='advanced_search_view'),
     path("suggest_match_view/", suggest_match_view, name='suggest_match_view'),
     path("find_similar_view/", find_similar_view, name='find_similar_view'),
-    path("trendy_outfits_view/", trendy_outfits_view, name='trendy_outfits_view')
+    path("trendy_outfits_view/", trendy_outfits_view, name='trendy_outfits_view'),
+    path("wardrobe_outfits_view/", wardrobe_outfits_view, name='wardrobe_outfits_view'),
+    path("recommend_wardrobe_view/", recommend_wardrobe_view, name='recommend_wardrobe_view')
 ]
