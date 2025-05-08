@@ -34,6 +34,7 @@ export default function LoginScreen({ navigation }) {
         Alert.alert('Error', data.error || 'Login failed.');
       }
     } catch (error) {
+      console.log('Login Error:', error);
       Alert.alert('Error', 'Network error.');
     }
   };
