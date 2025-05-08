@@ -616,6 +616,38 @@ def search_by_store_view(request):
     return JsonResponse({'results': result.data}, status=200)
 
 @csrf_exempt
+def filter_by_category_view(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    session_id = data.get('session_id')
+    category = data.get('category')  # "top" or "bottom"
+    subtype = data.get('subtype')    # optional
+    gender = data.get('gender')      # "mens" or "womens"
+
+    if not session_id or not category:
+        return JsonResponse({'error': 'Session ID and category are required'}, status=400)
+
+    session_entry = supabase.table("user_sessions").select("email").eq("session_id", session_id).execute()
+    if not session_entry.data:
+        return JsonResponse({'error': 'Invalid or expired session'}, status=403)
+
+    query = supabase.table("products").select("*").eq("type", category)
+
+    if subtype:
+        query = query.eq("subtype", subtype)
+    if gender:
+        query = query.eq("gender", gender)
+
+    result = query.execute()
+    return JsonResponse({'results': result.data}, status=200)
+
+@csrf_exempt
 def sort_by_price_view(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'Only POST allowed'}, status=405)
@@ -839,5 +871,29 @@ def recommend_wardrobe_view(request):
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+def logout_view(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    session_id = data.get('session_id')
+    if not session_id:
+        return JsonResponse({'error': 'Session ID is required'}, status=400)
+
+    # Verify session
+    session_entry = supabase.table("user_sessions").select("email").eq("session_id", session_id).execute()
+    if not session_entry.data:
+        return JsonResponse({'error': 'Invalid or expired session'}, status=403)
+
+    # Delete the session
+    supabase.table("user_sessions").delete().eq("session_id", session_id).execute()
+
+    return JsonResponse({'message': 'Logout successful'}, status=200)
 
 
