@@ -3,6 +3,7 @@ from supabase import create_client
 from sklearn.metrics.pairwise import cosine_similarity
 import os
 import numpy as np
+import ast
 
 supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
 
@@ -14,7 +15,10 @@ def suggest_matching_items(image_path, opposite_type='bottom'):
         return []
 
     input_emb = get_image_embedding(image_path)
-    all_embeddings = np.array([p['embedding'] for p in products])
+    all_embeddings = np.array([
+        ast.literal_eval(p['embedding']) if isinstance(p['embedding'], str) else p['embedding']
+        for p in products
+    ])
     similarities = cosine_similarity([input_emb], all_embeddings)[0]
 
     top_matches = sorted(zip(products, similarities), key=lambda x: x[1], reverse=True)

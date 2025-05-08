@@ -5,6 +5,7 @@ from .supabase_client import supabase
 from .utils import generate_otp
 import json
 import re
+import ast
 import os
 from django.utils.timezone import now
 from django.contrib.auth.hashers import make_password
@@ -605,8 +606,15 @@ def suggest_match_view(request):
         return JsonResponse({'error': 'Only POST allowed'}, status=405)
 
     try:
+        if 'image' not in request.FILES:
+            return JsonResponse({'error': 'No image file provided'}, status=400)
+
         uploaded_file = request.FILES['image']
-        path = f"temp/{uploaded_file.name}"
+        temp_dir = os.path.join(os.getcwd(), "temp")
+        os.makedirs(temp_dir, exist_ok=True)
+
+        path = os.path.join(temp_dir, uploaded_file.name)
+
         with open(path, "wb+") as f:
             for chunk in uploaded_file.chunks():
                 f.write(chunk)
@@ -618,6 +626,7 @@ def suggest_match_view(request):
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
 
 
 
