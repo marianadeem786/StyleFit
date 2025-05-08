@@ -1,33 +1,28 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
-  Image,
   StyleSheet,
-  Alert,
+  Image,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { useNavigation } from '@react-navigation/native';
 
-export default function LookFinderScreen({ navigation }) {
-  const [selectedImage, setSelectedImage] = useState(null);
+export default function SuggestMatchingScreen() {
+  const navigation = useNavigation();
 
-  const handleImagePick = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert('Permission required', 'Enable gallery access to use this feature');
-      return;
-    }
-
+  const handleUpload = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaType.Images,
       allowsEditing: true,
       quality: 1,
     });
 
     if (!result.canceled) {
-      setSelectedImage(result.assets[0].uri);
-      // You can trigger backend search logic here
+      const imageUri = result.assets[0].uri;
+      // Later you'll send imageUri to AI to detect & suggest match
+      alert('Image uploaded! (matching logic coming soon)');
     }
   };
 
@@ -44,29 +39,20 @@ export default function LookFinderScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Title */}
-      <View style={styles.titleContainer}>
-        <Text style={styles.title}>LOOK FINDER</Text>
+      {/* Title Box */}
+      <View style={styles.headerBox}>
+        <Text style={styles.headerText}>SUGGEST MATCHING</Text>
       </View>
 
       {/* Description */}
       <Text style={styles.description}>
-        Found something you love? Upload an image and we'll help you find exact or similar styles!
+        Let us suggest the perfect match for your style.{"\n"}Upload an image of a top or bottom, and we’ll find a stylish match for it!
       </Text>
 
       {/* Upload Button */}
-      <TouchableOpacity style={styles.uploadButton} onPress={handleImagePick}>
+      <TouchableOpacity style={styles.uploadButton} onPress={handleUpload}>
         <Text style={styles.uploadButtonText}>UPLOAD</Text>
       </TouchableOpacity>
-
-      {/* Preview if selected */}
-      {selectedImage && (
-        <View style={styles.previewContainer}>
-          <Text style={styles.previewLabel}>Your Upload:</Text>
-          <Image source={{ uri: selectedImage }} style={styles.previewImage} />
-          {/* Later: show matching items below */}
-        </View>
-      )}
     </View>
   );
 }
@@ -88,7 +74,7 @@ const styles = StyleSheet.create({
     height: 28,
     tintColor: '#4d6a72',
   },
-  titleContainer: {
+  headerBox: {
     backgroundColor: '#4d6a72',
     alignSelf: 'flex-start',
     borderTopRightRadius: 20,
@@ -99,18 +85,17 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     marginLeft: 20,
   },
-  title: {
+  headerText: {
     color: 'white',
     fontSize: 20,
     fontFamily: 'Montserrat-Bold',
   },
   description: {
-    fontSize: 24,
-    color: '#4d6a72',
-    fontFamily: 'Montserrat-Regular',
+    fontSize: 20,
+    fontFamily: 'Montserrat-SemiBold',
+    color: '#333',
     marginBottom: 30,
-    marginTop: 23,
-    marginHorizontal: 20,
+    marginHorizontal: 10,
     textAlign: 'center',
   },
   uploadButton: {
@@ -123,24 +108,8 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   uploadButtonText: {
-    color: '#fff',
+    color: 'white',
     fontSize: 16,
     fontFamily: 'Montserrat-Bold',
-  },
-  previewContainer: {
-    marginTop: 10,
-    alignItems: 'center',
-  },
-  previewLabel: {
-    fontSize: 16,
-    color: '#4d6a72',
-    marginBottom: 10,
-    fontFamily: 'Montserrat-Medium',
-  },
-  previewImage: {
-    width: 250,
-    height: 300,
-    borderRadius: 15,
-    resizeMode: 'cover',
   },
 });
