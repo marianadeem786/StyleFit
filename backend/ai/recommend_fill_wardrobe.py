@@ -5,13 +5,13 @@ import random
 supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
 
 def recommend_for_wardrobe(email, count=5):
-    wardrobe_result = supabase.table("wardrobe").select("product_id").eq("email", email).execute()
+    wardrobe_result = supabase.table("wardrobe").select("id").eq("email", email).execute()
     wardrobe_items = wardrobe_result.data
 
     if not wardrobe_items:
         return {"error": "Wardrobe is empty, please add some items first"}
 
-    wardrobe_ids = [item["product_id"] for item in wardrobe_items]
+    wardrobe_ids = [item["id"] for item in wardrobe_items]
     product_result = supabase.table("products").select("id, type, name, subtype, url, images").in_("id", wardrobe_ids).execute()
     wardrobe_products = product_result.data
 

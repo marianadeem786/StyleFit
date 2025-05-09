@@ -1,300 +1,197 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Image, ScrollView, FlatList, StyleSheet, Modal, Pressable } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  FlatList,
+  Alert,
+  Image,
+  Linking
+} from 'react-native';
+import { Picker } from '@react-native-picker/picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import config from '../config'; // Ensure this is properly set
 
-const storesList = [
-  'Outfitters', 'Elo', 'Breakout', 'Cambridge', 'Monark',
-  'ONE', 'Engine', 'Cougar', 'Aeronore', 'Lama', 'LeftoversDen'
-];
+export default function GlobalStoreScreen({ navigation }) {
+  const [genderFilter, setGenderFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [storeFilter, setStoreFilter] = useState('');
+  const [priceOrder, setPriceOrder] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-const categoryMap = {
-  Top: ['polo', 'formal', 'shirt', 'polo shirt', 't-shirt'],
-  Bottom: ['trousers', 'jeans', 'shorts', 'chino', 'cargo', 'formal']
-};
+  // Async function to fetch session ID from AsyncStorage
+  const getSessionId = async () => {
+    try {
+      const sessionId = await AsyncStorage.getItem('session_id'); // Assuming session ID is saved as 'session_id'
+      return sessionId;
+    } catch (error) {
+      console.error('Failed to fetch session ID:', error);
+      return null;
+    }
+  };
 
-const sampleProducts = Array.from({ length: 12 }).map((_, index) => ({
-  id: index.toString(),
-  image: null,
-}));
+  // Function to fetch products based on filters
+  const fetchProducts = async () => {
+    setLoading(true);
 
-const FilterOption = ({ label, options = [], selected, setSelected, showIcon = false, expandable = false, singleSelect = false }) => {
-  const [expanded, setExpanded] = useState(false);
+    const sessionId = await getSessionId();
+    if (!sessionId) {
+      Alert.alert('Error', 'Session ID not found.');
+      setLoading(false);
+      return;
+    }
 
-  const toggleOption = (option) => {
-    if (singleSelect) {
-      if (selected.includes(option)) {
-        setSelected([]); // unselect if tapped again
+    const filters = {
+      session_id: sessionId,
+      name: searchTerm,
+      store: storeFilter,
+      category: categoryFilter,
+      gender: genderFilter,
+      order: priceOrder
+    };
+
+    try {
+      const response = await fetch(`${config.BACKEND_URL}/api/advanced_search_view/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(filters),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setProducts(data.results || []);
       } else {
-        setSelected([option]); // only one selected
+        Alert.alert('Error', data.error || 'Failed to fetch products.');
       }
-    } else {
-      const alreadySelected = selected.includes(option);
-      if (alreadySelected) {
-        setSelected(selected.filter((item) => item !== option));
-      } else {
-        setSelected([...selected, option]);
-      }
+    } catch (error) {
+      Alert.alert('Error', 'Something went wrong while fetching products.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, [genderFilter, categoryFilter, storeFilter, priceOrder, searchTerm]); // Re-fetch products when filters change
+
+  const openURL = (url) => {
+    if (url) {
+      Linking.openURL(url).catch(err => console.error('Failed to open URL:', err));
     }
   };
 
   return (
-    <View style={styles.filterGroup}>
-      <TouchableOpacity style={styles.filterLabelRow} onPress={() => expandable && setExpanded(!expanded)}>
-        <Text style={styles.filterLabel}>{label}</Text>
-        {showIcon && <Image source={require('../assets/arrow.png')} style={styles.arrowIcon} />}
-      </TouchableOpacity>
-      {(!expandable || expanded) && options.map((option) => (
+    <ScrollView contentContainerStyle={styles.container}>
+      {/* Filters */}
+      <View style={styles.filtersContainer}>
+        <Text style={styles.filterTitle}>Filters</Text>
+        
+        {/* Gender Filter */}
         <TouchableOpacity
-          key={option}
-          onPress={() => toggleOption(option)}
-          style={[styles.filterButton, selected.includes(option) && styles.filterButtonSelected]}
+          style={[styles.filterButton, genderFilter ? styles.filterButtonSelected : {}]}
+          onPress={() => setGenderFilter(genderFilter === 'mens' ? '' : 'mens')}
         >
-          <Text style={[styles.filterButtonText, selected.includes(option) && styles.filterButtonTextSelected]}>
-            {option}
-          </Text>
+          <Text style={styles.filterButtonText}>Men</Text>
         </TouchableOpacity>
-      ))}
-    </View>
-  );
-};
-
-export default function GlobalStoreScreen() {
-  const navigation = useNavigation();
-  const [filterVisible, setFilterVisible] = useState(false);
-  const [selectedFilters, setSelectedFilters] = useState({
-    gender: [],
-    category: [],
-    store: [],
-    order: [],
-  });
-
-  const updateFilter = (type, value) => {
-    setSelectedFilters((prev) => ({ ...prev, [type]: value }));
-  };
-
-  const renderItem = ({ item }) => (
-    <View style={styles.productBox}>
-      <View style={styles.imagePlaceholder}></View>
-    </View>
-  );
-
-  const selectedSummary = Object.entries(selectedFilters)
-    .flatMap(([_, value]) => Array.isArray(value) ? value : [])
-    .filter(Boolean)
-    .join(', ');
-
-  return (
-    <View style={styles.container}>
-      {/* NAVBAR */}
-      <View style={styles.navbar}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Image source={require('../assets/backicon.png')} style={styles.navIcon} />
+        <TouchableOpacity
+          style={[styles.filterButton, genderFilter === 'womens' ? styles.filterButtonSelected : {}]}
+          onPress={() => setGenderFilter(genderFilter === 'womens' ? '' : 'womens')}
+        >
+          <Text style={styles.filterButtonText}>Women</Text>
         </TouchableOpacity>
-        <View style={{ flex: 1 }} />
-        <TouchableOpacity onPress={() => navigation.navigate('Home')}>
-          <Image source={require('../assets/homeicon.png')} style={styles.navIcon} />
+        <TouchableOpacity
+          style={[styles.filterButton, genderFilter === 'unisex' ? styles.filterButtonSelected : {}]}
+          onPress={() => setGenderFilter(genderFilter === 'unisex' ? '' : 'unisex')}
+        >
+          <Text style={styles.filterButtonText}>Unisex</Text>
         </TouchableOpacity>
+
+        {/* Category Filter */}
+        <TouchableOpacity
+          style={[styles.filterButton, categoryFilter === 'top' ? styles.filterButtonSelected : {}]}
+          onPress={() => setCategoryFilter(categoryFilter === 'top' ? '' : 'top')}
+        >
+          <Text style={styles.filterButtonText}>Top Wear</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.filterButton, categoryFilter === 'bottom' ? styles.filterButtonSelected : {}]}
+          onPress={() => setCategoryFilter(categoryFilter === 'bottom' ? '' : 'bottom')}
+        >
+          <Text style={styles.filterButtonText}>Bottom Wear</Text>
+        </TouchableOpacity>
+
+        {/* Price Order Filter */}
+        <TouchableOpacity
+          style={[styles.filterButton, priceOrder === 'low' ? styles.filterButtonSelected : {}]}
+          onPress={() => setPriceOrder(priceOrder === 'low' ? '' : 'low')}
+        >
+          <Text style={styles.filterButtonText}>Low to High</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.filterButton, priceOrder === 'high' ? styles.filterButtonSelected : {}]}
+          onPress={() => setPriceOrder(priceOrder === 'high' ? '' : 'high')}
+        >
+          <Text style={styles.filterButtonText}>High to Low</Text>
+        </TouchableOpacity>
+
+        {/* Search */}
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search products"
+          value={searchTerm}
+          onChangeText={setSearchTerm}
+        />
       </View>
 
-      {/* Title */}
-      <View style={styles.titleContainer}>
-        <Text style={styles.title}>GLOBAL STORE</Text>
-      </View>
+      {/* Load products */}
+      {loading ? (
+        <Text style={styles.loadingText}>Loading products...</Text>
+      ) : (
+        <FlatList
+          data={products}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <View style={styles.productCard}>
+              {/* Product Image */}
+              <Image source={{ uri: item.images[0] }} style={styles.productImage} />
 
-      {/* Filter Button */}
-      <View style={styles.filterRow}>
-        <TouchableOpacity style={styles.filterButtonContainer} onPress={() => setFilterVisible(true)}>
-          <Image source={require('../assets/filter.png')} style={styles.filterIcon} />
-          <Text style={styles.filterText}>Filter</Text>
-        </TouchableOpacity>
-      </View>
-
-      {selectedSummary.length > 0 && (
-        <Text style={styles.selectedFiltersText}>Selected: {selectedSummary}</Text>
+              <Text style={styles.productName}>{item.name}</Text>
+              <Text style={styles.productPrice}>PKR{item.price}</Text>
+              <TouchableOpacity
+                style={styles.productLink}
+                onPress={() => openURL(item.url)}>
+                <Text style={styles.productLinkText}>View</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        />
       )}
-
-      <FlatList
-        data={sampleProducts}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        contentContainerStyle={styles.productGrid}
-      />
-
-      {/* FILTER MODAL */}
-      <Modal visible={filterVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Filters</Text>
-            <ScrollView>
-
-              <FilterOption
-                label="Gender"
-                options={["mens", "womens"]}
-                selected={selectedFilters.gender}
-                setSelected={(val) => updateFilter("gender", val)}
-                showIcon
-                expandable
-              />
-
-              <FilterOption
-                label="Category - Top"
-                options={categoryMap.Top}
-                selected={selectedFilters.category}
-                setSelected={(val) => updateFilter("category", val)}
-                showIcon
-                expandable
-              />
-
-              <FilterOption
-                label="Category - Bottom"
-                options={categoryMap.Bottom}
-                selected={selectedFilters.category}
-                setSelected={(val) => updateFilter("category", val)}
-                showIcon
-                expandable
-              />
-
-              <FilterOption
-                label="Store"
-                options={storesList}
-                selected={selectedFilters.store}
-                setSelected={(val) => updateFilter("store", val)}
-                showIcon
-                expandable
-              />
-
-              <FilterOption
-                label="Order"
-                options={["Price: Low to High", "Price: High to Low"]}
-                selected={selectedFilters.order}
-                setSelected={(val) => updateFilter("order", val)}
-                showIcon
-                expandable
-                singleSelect={true}
-              />
-            </ScrollView>
-
-            <Pressable onPress={() => setFilterVisible(false)} style={styles.applyButton}>
-              <Text style={styles.applyButtonText}>Apply Filters</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: '#F5F5DC',
     padding: 16,
   },
-  navbar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-  },
-  navIcon: {
-    width: 28,
-    height: 28,
-    tintColor: '#4d6a72',
-  },
-  titleContainer: {
-    backgroundColor: '#4d6a72',
-    alignSelf: 'flex-start',
-    borderTopRightRadius: 20,
-    borderBottomRightRadius: 20,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    marginTop: 20,
+  filtersContainer: {
     marginBottom: 20,
   },
-  title: {
-    color: 'white',
-    fontSize: 20,
-    fontFamily: 'Montserrat-Bold',  // Consistent with other screens
-  },
-  filterRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-  },
-  filterButtonContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 5,
-    padding: 6,
-  },
-  filterIcon: {
-    width: 30,
-    height: 30,
-  },
-  filterText: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginLeft: 4,
+  filterTitle: {
+    fontSize: 18,
+    fontFamily: 'Montserrat-Bold',
     color: '#4d6a72',
-  },
-  selectedFiltersText: {
-    marginTop: 10,
-    fontSize: 14,
-    color: '#333',
-  },
-  productGrid: {
-    marginTop: 10,
-  },
-  productBox: {
-    width: '48%',
-    height: 160,
-    backgroundColor: '#ccc',
-    margin: '1%',
-    borderRadius: 10,
-  },
-  imagePlaceholder: {
-    flex: 1,
-    backgroundColor: '#bbb',
-    borderRadius: 10,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalBox: {
-    width: '85%',
-    maxHeight: '80%',
-    backgroundColor: '#fff',
-    borderRadius: 15,
-    padding: 20,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontFamily: 'Montserrat-Bold',  // Consistent with other screens
     marginBottom: 10,
-    textAlign: 'center',
-  },
-  filterGroup: {
-    marginBottom: 20,
-  },
-  filterLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  filterLabel: {
-    fontSize: 16,
-    fontFamily: 'Montserrat-SemiBold',  // Consistent with other screens
-    marginRight: 8,
-    color: '#4d6a72',  // Consistent with other screens
-  },
-  arrowIcon: {
-    width: 14,
-    height: 14,
-    resizeMode: 'contain',
   },
   filterButton: {
     backgroundColor: '#eee',
@@ -302,27 +199,62 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 10,
     marginVertical: 4,
+    alignItems: 'center',
   },
   filterButtonSelected: {
     backgroundColor: '#50808E',
   },
   filterButtonText: {
     color: '#333',
-    fontFamily: 'Montserrat-Regular',  // Consistent with other screens
+    fontFamily: 'Montserrat-Regular',
   },
-  filterButtonTextSelected: {
-    color: 'white',
+  searchInput: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingLeft: 10,
+    marginTop: 10,
+    marginBottom: 20,
+    backgroundColor: '#fff',
   },
-  applyButton: {
-    backgroundColor: '#4d6a72',
-    padding: 12,
+  loadingText: {
+    fontSize: 16,
+    color: '#333',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  productCard: {
+    backgroundColor: '#fff',
     borderRadius: 10,
-    alignItems: 'center',
+    marginBottom: 15,
+    padding: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  productImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 10,
+  },
+  productName: {
+    fontSize: 16,
+    fontFamily: 'Montserrat-SemiBold',
     marginTop: 10,
   },
-  applyButtonText: {
-    color: 'white',
-    fontFamily: 'Montserrat-Bold',
-    fontSize: 16,
-    },
-    });
+  productPrice: {
+    fontSize: 14,
+    color: '#50808E',
+    marginTop: 5,
+  },
+  productLink: {
+    marginTop: 10,
+  },
+  productLinkText: {
+    color: '#50808E',
+    fontWeight: 'bold',
+  },
+});

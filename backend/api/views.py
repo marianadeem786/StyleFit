@@ -329,10 +329,10 @@ def upload_wardrobe_item_view(request):
 
     # Generate file path
     ext = image.name.split('.')[-1]
-    filename = f"wardrobe/{email}/{uuid.uuid4()}.{ext}"
+    filename = f"wardrobe1/{email}/{uuid.uuid4()}.{ext}"
 
     try:
-        supabase.storage.from_('wardrobe').upload(filename, image.read(), {
+        supabase.storage.from_('wardrobe1').upload(filename, image.read(), {
             "content-type": image.content_type
         })
     except Exception as e:
@@ -382,11 +382,11 @@ def remove_wardrobe_item_view(request):
         return JsonResponse({'error': 'Wardrobe item not found'}, status=404)
 
     image_url = entry.data[0]["image_url"]
-    filename = image_url.split("/wardrobe/")[1]
+    filename = image_url.split("/wardrobe1/")[1]
 
     # Delete image from storage
     try:
-        supabase.storage.from_("wardrobe").remove([f"wardrobe/{filename}"])
+        supabase.storage.from_("wardrobe1").remove([f"wardrobe1/{filename}"])
     except Exception as e:
         print("Warning: storage delete failed", e)
 
@@ -420,8 +420,15 @@ def view_wardrobe_items_view(request):
     # Fetch wardrobe items
     result = supabase.table("wardrobe").select("*").eq("email", email).order("uploaded_at", desc=True).execute()
 
-    return JsonResponse({'items': result.data}, status=200)
+    if not result.data:
+        return JsonResponse({'items': []}, status=200)
 
+    # Optional: Validate image URL points to wardrobe1 bucket
+    for item in result.data:
+        if not item["image_url"].startswith("https://") or "wardrobe1" not in item["image_url"]:
+            item["image_url"] = f"https://{os.getenv('SUPABASE_URL').split('//')[1]}/storage/v1/object/public/wardrobe1/{item['image_url'].split('/wardrobe1/')[-1]}"
+
+    return JsonResponse({'items': result.data}, status=200)
 
 @csrf_exempt
 def show_profile_view(request):
@@ -695,7 +702,7 @@ def advanced_search_view(request):
         return JsonResponse({'error': 'Invalid or expired session'}, status=403)
 
     # Build product query
-    query = supabase.table("products").select("*")
+    query = supabase.table("products").select("id, name, price, images, url")  # Explicitly select image_url and url fields
 
     if name:
         query = query.ilike("name", f"%{name}%")
@@ -711,7 +718,9 @@ def advanced_search_view(request):
         query = query.order("price", desc=(order == "high"))
 
     result = query.execute()
+
     return JsonResponse({'results': result.data}, status=200)
+
 
 
 @csrf_exempt

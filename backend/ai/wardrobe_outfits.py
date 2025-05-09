@@ -5,7 +5,7 @@ import random
 supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
 
 def generate_outfits_from_wardrobe(email, count=5):
-    result = supabase.table("wardrobe").select("product_id").eq("email", email).execute()
+    result = supabase.table("wardrobe").select("id").eq("email", email).execute()
     wardrobe_items = result.data
 
     if not wardrobe_items:
